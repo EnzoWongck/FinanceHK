@@ -566,23 +566,24 @@ function renderTxns(){
   txns.sort((a,b)=>b.date.localeCompare(a.date));
   const el=document.getElementById('txns-list');
   if(!txns.length){el.innerHTML='<div class="empty">本月無交易記錄</div>';return}
+  const trashIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
   el.innerHTML=txns.map(t=>{
     const cat=displayCat(t.type,t.category);
     const catDisplay=cat?cat:'<span class="deleted-cat">已刪除類別</span>';
-    const pokerBadge=t.pokerLinked?'<span style="font-size:11px;margin-left:4px;opacity:.7">🃏</span>':'';
-    return `<div class="row-item">
-      <div class="row-header">
-        <div>
-          <div class="row-title">${t.note||catDisplay}${pokerBadge}</div>
-          <div class="row-sub">${t.date} &nbsp;<span class="badge badge-${t.type}">${t.type==='income'?'收入':'支出'}</span> &nbsp;${t.note?catDisplay:''}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="row-amount ${t.type==='income'?'amount-pos':'amount-neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>
-          ${t.pokerLinked?'<span style="font-size:10px;color:var(--text2);padding:0 4px">自動</span>':'<button class="btn btn-sm btn-ghost" onclick="editTxn(''+t.id+'')">編輯</button>'}
-          <button class="btn-icon-del" onclick="${t.pokerLinked?'alert('此交易由撲克記錄自動生成，請在撲克頁編輯')':'deleteTxn(''+t.id+'')'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
-        </div>
-      </div>
-    </div>`;
+    const pokerBadge=t.pokerLinked?' <span style="font-size:11px;opacity:.6">🃏</span>':'';
+    const editBtn=t.pokerLinked
+      ?'<span style="font-size:10px;color:var(--text2)">自動</span>'
+      :'<button class="btn btn-sm btn-ghost" onclick="editTxn('' +t.id+ '')">編輯</button>';
+    const delBtn=t.pokerLinked
+      ?'<button class="btn-icon-del" onclick="alert(' 此交易由撲克記錄自動生成，請在撲克頁修改')" >'+trashIcon+'</button>'
+      :'<button class="btn-icon-del" onclick="deleteTxn('' +t.id+ '')">'+trashIcon+'</button>';
+    return '<div class="row-item"><div class="row-header">'
+      +'<div><div class="row-title">'+(t.note||catDisplay)+pokerBadge+'</div>'
+      +'<div class="row-sub">'+t.date+' &nbsp;<span class="badge badge-'+t.type+'">'+(t.type==='income'?'收入':'支出')+'</span>'+(t.note?' &nbsp;'+catDisplay:'')+'</div>'
+      +'</div><div style="display:flex;align-items:center;gap:8px">'
+      +'<span class="row-amount '+(t.type==='income'?'amount-pos':'amount-neg')+'">'+(t.type==='income'?'+':'-')+fmt(t.amount)+'</span>'
+      +editBtn+delBtn
+      +'</div></div></div>';
   }).join('');
 }
 function openTxnModal(){
