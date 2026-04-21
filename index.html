@@ -592,8 +592,8 @@ function getAssetCats(){return ld(K.assetCats)||[]}
 
 // Utils
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
-function fmt(n){return Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
-function fmtSigned(n){return (n>=0?'+':'-')+' '+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmt(n){return '$'+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmtSigned(n){return (n>=0?'+':'-')+' $'+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
 
 // Navigation
 function goPage(id,el){
