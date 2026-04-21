@@ -657,7 +657,7 @@ function renderDash(){
   for(let i=0;i<trendDays;i++){
     const day=new Date(startDate.getFullYear(),startDate.getMonth(),startDate.getDate()+i);
     const dayKey=day.toISOString().slice(0,10);
-    trendPoints.push({key:dayKey,v:nw});
+    trendPoints.push({key:dayKey,v:presentAssets});
   }
   txns.forEach(t=>{
     if(!t.date||typeof t.amount!=='number')return;
