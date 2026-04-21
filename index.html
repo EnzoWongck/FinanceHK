@@ -635,11 +635,9 @@ function renderDash(){
   const loanLent=loans.filter(l=>l.ltype==='lent'&&!l.settled).reduce((s,l)=>s+calcLoanTotal(l),0);
   const loanBorrowed=loans.filter(l=>l.ltype==='borrowed'&&!l.settled).reduce((s,l)=>s+calcLoanTotal(l),0);
   const presentAssets=bankTotal+cash+cryptoTotal; // 現有資產: cash + bank + investments only
-  const totalAssets=bankTotal+cash+cryptoTotal+loanLent-cardTotal; // 總資產: includes loans given, minus card debt
-  const liab=cardTotal+loanBorrowed;
+  const totalAssets=bankTotal+cash+cryptoTotal+loanLent-cardTotal-loanBorrowed; // 總資產: 現有資產+借款-負債
   document.getElementById('nw-total').textContent=fmt(presentAssets);
   document.getElementById('nw-assets').textContent=fmt(totalAssets);
-  document.getElementById('nw-liab').textContent=fmt(liab);
   document.getElementById('dash-banks').textContent=fmt(bankTotal);
   document.getElementById('dash-cash').textContent=fmt(cash);
   document.getElementById('dash-crypto').textContent=fmt(cryptoTotal);
