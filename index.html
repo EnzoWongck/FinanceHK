@@ -83,6 +83,9 @@ select option{background:var(--bg3)}
 .cat-name:hover{border-color:var(--border)}
 .cat-name:focus{border-color:var(--primary);background:var(--bg2)}
 .deleted-cat{color:var(--text2);font-style:italic;font-size:13px}
+.drag-handle{color:var(--text2);font-size:16px;cursor:grab;padding:0 8px 0 0;user-select:none;flex-shrink:0;touch-action:none}
+.drag-handle:active{cursor:grabbing}
+.cat-row.dnd-over{background:var(--bg2);border-color:var(--primary);box-shadow:inset 0 -2px 0 var(--primary)}
 .toggle-group{display:flex;background:var(--bg3);border-radius:8px;padding:3px;margin-bottom:12px}
 .toggle-btn{flex:1;padding:7px;border:none;background:none;color:var(--text2);font-size:13px;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s}
 .toggle-btn.active{background:var(--primary);color:#fff}
@@ -322,11 +325,11 @@ select option{background:var(--bg3)}
     <input type="hidden" id="poker-edit-id">
     <div class="form-row">
       <div class="form-group"><label>日期</label><input id="poker-date" type="date"></div>
-      <div class="form-group"><label>場地/類型</label><input id="poker-venue" placeholder="例：Live / 網上"></div>
+      <div class="form-group"><label>類型</label><select id="poker-venue"><option value="Live">Live</option><option value="Online">Online</option></select></div>
     </div>
     <div class="form-row">
       <div class="form-group"><label>買入 (HKD)</label><input id="poker-buyin" type="number" placeholder="0" step="0.01"></div>
-      <div class="form-group"><label>收回 (HKD)</label><input id="poker-cashout" type="number" placeholder="0" step="0.01"></div>
+      <div class="form-group"><label>兌現 (HKD)</label><input id="poker-cashout" type="number" placeholder="0" step="0.01"></div>
     </div>
     <div class="form-group"><label>備註</label><input id="poker-note" placeholder="選填"></div>
     <div class="modal-actions">
@@ -412,11 +415,27 @@ function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 function ld(k){try{const v=localStorage.getItem(k);return v===null?null:JSON.parse(v)}catch(e){return null}}
 
 // Categories
-const DEFAULT_INC=['Poker (live)','Poker (online)','生活費','薪水','TFT','股息','利息收入','Other'];
-const DEFAULT_EXP=['Poker Loss','購物','停車場','晚餐','午餐','早餐','娛樂','交通','房租','日用品','GAS','禮物','點心','飲品','保險','數位','Other'];
+const DEFAULT_INC=['Poker (Live)','Poker (Online)','生活費','薪水','TFT','股息','利息收入','Other'];
+const DEFAULT_EXP=['Poker Loss (Live)','Poker Loss (Online)','購物','停車場','晚餐','午餐','早餐','娛樂','交通','房租','日用品','GAS','禮物','點心','飲品','保險','數位','Other'];
 function getIncCats(){const s=ld(K.incCats);return s!==null?s:[...DEFAULT_INC]}
 function getExpCats(){const s=ld(K.expCats);return s!==null?s:[...DEFAULT_EXP]}
-function initCats(){if(ld(K.incCats)===null)sv(K.incCats,[...DEFAULT_INC]);if(ld(K.expCats)===null)sv(K.expCats,[...DEFAULT_EXP])}
+function initCats(){
+  if(ld(K.incCats)===null)sv(K.incCats,[...DEFAULT_INC]);
+  if(ld(K.expCats)===null)sv(K.expCats,[...DEFAULT_EXP]);
+  var inc=getIncCats(),incChanged=false;
+  [['Poker (live)','Poker (Live)'],['Poker (online)','Poker (Online)']].forEach(function(p){
+    var i=inc.indexOf(p[0]);if(i>=0){inc[i]=p[1];incChanged=true;}
+  });
+  if(!inc.includes('Poker (Live)')){inc.unshift('Poker (Live)');incChanged=true;}
+  if(!inc.includes('Poker (Online)')){inc.splice(inc.indexOf('Poker (Live)')+1,0,'Poker (Online)');incChanged=true;}
+  if(incChanged)sv(K.incCats,inc);
+  var exp=getExpCats(),expChanged=false;
+  var ol=exp.indexOf('Poker Loss');
+  if(ol>=0){exp.splice(ol,1,'Poker Loss (Live)','Poker Loss (Online)');expChanged=true;}
+  if(!exp.includes('Poker Loss (Live)')){exp.unshift('Poker Loss (Live)');expChanged=true;}
+  if(!exp.includes('Poker Loss (Online)')){exp.splice(exp.indexOf('Poker Loss (Live)')+1,0,'Poker Loss (Online)');expChanged=true;}
+  if(expChanged)sv(K.expCats,exp);
+}
 function displayCat(type,cat){const list=type==='income'?getIncCats():getExpCats();return list.includes(cat)?cat:null}
 
 // Data getters
@@ -638,28 +657,30 @@ function renderPoker(){
   const el=document.getElementById('poker-list');
   if(!sessions.length){el.innerHTML='<div class="empty">尚無撲克記錄</div>';return}
   const sorted=[...sessions].sort((a,b)=>b.date.localeCompare(a.date));
-  el.innerHTML=sorted.map(p=>{
-    const pnl=p.cashout-p.buyin;
-    return `<div class="row-item">
-      <div class="row-header">
-        <div><div class="row-title">${p.venue||'撲克'}</div><div class="row-sub">${p.date}${p.note?' · '+p.note:''}</div></div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="text-align:right">
-            <div class="row-amount ${pnl>=0?'amount-pos':'amount-neg'}">${pnl>=0?'+':'-'}${fmt(Math.abs(pnl))}</div>
-            <div class="row-sub">買:${fmt(p.buyin)} 回:${fmt(p.cashout)}</div>
-          </div>
-          <button class="btn btn-sm btn-ghost" onclick="editPoker('${p.id}')">編輯</button>
-          <button class="btn-icon-del" onclick="deletePoker('${p.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
-        </div>
-      </div>
-    </div>`;
+  el.innerHTML=sorted.map(function(p){
+    var pnl=p.cashout-p.buyin;
+    var sq=String.fromCharCode(39);
+    var venue=p.venue||'Live';
+    var vbadge='<span class="badge badge-poker" style="font-size:10px;margin-right:4px">'+venue+'</span>';
+    var trash='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+    return '<div class="row-item"><div class="row-header">'
+      +'<div><div class="row-title">'+vbadge+(p.note?p.note:'')+'</div>'
+      +'<div class="row-sub">'+p.date+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+      +'<div style="text-align:right">'
+      +'<div class="row-amount '+(pnl>=0?'amount-pos':'amount-neg')+'">'+(pnl>=0?'+':'-')+fmt(Math.abs(pnl))+'</div>'
+      +'<div class="row-sub">買:'+fmt(p.buyin)+' 兌:'+fmt(p.cashout)+'</div>'
+      +'</div>'
+      +'<button class="btn btn-sm btn-ghost" onclick="editPoker('+sq+p.id+sq+')">編輯</button>'
+      +'<button class="btn-icon-del" onclick="deletePoker('+sq+p.id+sq+')">'+trash+'</button>'
+      +'</div></div></div>';
   }).join('');
 }
 function openPokerModal(){
   document.getElementById('modal-poker-title').textContent='新增撲克記錄';
   document.getElementById('poker-edit-id').value='';
   document.getElementById('poker-date').value=new Date().toISOString().slice(0,10);
-  document.getElementById('poker-venue').value='';
+  document.getElementById('poker-venue').value='Live';
   document.getElementById('poker-buyin').value='';
   document.getElementById('poker-cashout').value='';
   document.getElementById('poker-note').value='';
@@ -670,7 +691,7 @@ function editPoker(id){
   document.getElementById('modal-poker-title').textContent='編輯撲克記錄';
   document.getElementById('poker-edit-id').value=id;
   document.getElementById('poker-date').value=p.date;
-  document.getElementById('poker-venue').value=p.venue||'';
+  document.getElementById('poker-venue').value=p.venue||'Live';
   document.getElementById('poker-buyin').value=p.buyin;
   document.getElementById('poker-cashout').value=p.cashout;
   document.getElementById('poker-note').value=p.note||'';
@@ -680,15 +701,15 @@ function syncPokerTxn(session){
   const pnl=session.cashout-session.buyin;
   const txns=getTxns().filter(t=>t.id!==session.txnId);
   if(pnl!==0){
-    const vLow=(session.venue||'').toLowerCase();
-    const isOnline=vLow.includes('online')||vLow.includes('網上');
-    const isProfit=pnl>0;
+    var isOnline=(session.venue||'').toLowerCase()==='online';
+    var isProfit=pnl>0;
+    var cat=isProfit?(isOnline?'Poker (Online)':'Poker (Live)'):(isOnline?'Poker Loss (Online)':'Poker Loss (Live)');
     txns.push({
       id:session.txnId,
       date:session.date,
       amount:Math.abs(pnl),
-      category:isProfit?(isOnline?'Poker (online)':'Poker (live)'):'Poker Loss',
-      note:(isProfit?'撲克盈利':'撲克虧損')+(session.venue?' - '+session.venue:''),
+      category:cat,
+      note:(isProfit?'撲克盈利':'撲克虧損')+' - '+(session.venue||'Live'),
       type:isProfit?'income':'expense',
       pokerLinked:true
     });
@@ -934,14 +955,68 @@ function deleteCat(type,name){
   sv(key,cats);renderSettings();updTxnCats();
 }
 function renderSettings(){
-  const renderCats=(type,cats)=>cats.map(c=>`<div class="cat-row">
-    <input class="cat-name" value="${c}" data-type="${type}" data-old="${c}"
-      onblur="renameCat(this)"
-      onkeydown="if(event.key==='Enter'){this.blur()}else if(event.key==='Escape'){this.value=this.dataset.old;this.blur()}">
-    <button class="btn-icon-del" onclick="deleteCat('${type}','${c}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
-  </div>`).join('');
-  document.getElementById('inc-cats-list').innerHTML=renderCats('income',getIncCats());
-  document.getElementById('exp-cats-list').innerHTML=renderCats('expense',getExpCats());
+  var sq=String.fromCharCode(39);
+  var trashSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
+  function buildCats(type,cats){
+    return cats.map(function(c,i){
+      return '<div class="cat-row" draggable="true" data-type="'+type+'" data-index="'+i+'" data-name="'+c+'"'
+        +' ondragstart="dndStart(event)" ondragover="dndOver(event)" ondrop="dndDrop(event)" ondragend="dndEnd(event)">'
+        +'<span class="drag-handle" ontouchstart="tDragStart(event)" ontouchmove="tDragMove(event)" ontouchend="tDragEnd(event)">☰</span>'
+        +'<input class="cat-name" value="'+c+'" data-type="'+type+'" data-old="'+c+'"'
+        +' onblur="renameCat(this)"'
+        +' onkeydown="if(event.key==='+sq+'Enter'+sq+'){this.blur()}else if(event.key==='+sq+'Escape'+sq+'){this.value=this.dataset.old;this.blur()}">'
+        +'<button class="btn-icon-del" onclick="deleteCat('+sq+type+sq+','+sq+c+sq+')">'+trashSVG+'</button>'
+        +'</div>';
+    }).join('');
+  }
+  document.getElementById('inc-cats-list').innerHTML=buildCats('income',getIncCats());
+  document.getElementById('exp-cats-list').innerHTML=buildCats('expense',getExpCats());
+}
+
+var _dndSrc=null;
+function dndStart(e){_dndSrc=e.currentTarget;e.dataTransfer.effectAllowed='move';setTimeout(function(){if(_dndSrc)_dndSrc.style.opacity='0.4';},0);}
+function dndOver(e){e.preventDefault();document.querySelectorAll('.cat-row').forEach(function(r){r.classList.remove('dnd-over');});if(e.currentTarget!==_dndSrc)e.currentTarget.classList.add('dnd-over');}
+function dndDrop(e){
+  e.preventDefault();
+  var tgt=e.currentTarget;
+  if(!_dndSrc||tgt===_dndSrc||tgt.dataset.type!==_dndSrc.dataset.type)return;
+  var isInc=_dndSrc.dataset.type==='income';
+  var cats=isInc?getIncCats():getExpCats();
+  cats.splice(parseInt(tgt.dataset.index),0,cats.splice(parseInt(_dndSrc.dataset.index),1)[0]);
+  sv(isInc?K.incCats:K.expCats,cats);renderSettings();updTxnCats();
+}
+function dndEnd(){document.querySelectorAll('.cat-row').forEach(function(r){r.style.opacity='1';r.classList.remove('dnd-over');});_dndSrc=null;}
+
+var _tSrc=null,_tGhost=null,_tType=null,_tIdx=null;
+function tDragStart(e){
+  e.preventDefault();
+  var row=e.currentTarget.closest('.cat-row');
+  _tType=row.dataset.type;_tIdx=parseInt(row.dataset.index);_tSrc=row;
+  var r=row.getBoundingClientRect();
+  _tGhost=row.cloneNode(true);
+  _tGhost.style.cssText='position:fixed;left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px;opacity:.75;pointer-events:none;z-index:999;background:var(--bg3);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.4);';
+  document.body.appendChild(_tGhost);row.style.opacity='0.35';
+}
+function tDragMove(e){
+  e.preventDefault();if(!_tGhost)return;
+  var t=e.touches[0];_tGhost.style.top=(t.clientY-24)+'px';
+  document.querySelectorAll('.cat-row').forEach(function(r){r.classList.remove('dnd-over');});
+  var el=document.elementFromPoint(t.clientX,t.clientY);
+  var over=el&&el.closest('.cat-row');
+  if(over&&over!==_tSrc&&over.dataset.type===_tType)over.classList.add('dnd-over');
+}
+function tDragEnd(e){
+  e.preventDefault();
+  if(_tGhost){document.body.removeChild(_tGhost);_tGhost=null;}
+  if(_tSrc)_tSrc.style.opacity='1';
+  var over=document.querySelector('.cat-row.dnd-over');
+  if(over&&_tSrc&&over!==_tSrc){
+    var isInc=_tType==='income';
+    var cats=isInc?getIncCats():getExpCats();
+    cats.splice(parseInt(over.dataset.index),0,cats.splice(_tIdx,1)[0]);
+    sv(isInc?K.incCats:K.expCats,cats);renderSettings();updTxnCats();
+  } else {document.querySelectorAll('.cat-row').forEach(function(r){r.classList.remove('dnd-over');});}
+  _tSrc=null;
 }
 
 // Data management
