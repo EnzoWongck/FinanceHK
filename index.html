@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finance HK">
@@ -15,7 +15,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--bg:#1a1a1a;--bg2:#2a2a2a;--bg3:#333333;--text:#e8e8e8;--text2:#999999;--primary:#cc785c;--primary-d:#b8664a;--success:#4caf50;--danger:#f44336;--warning:#ff9800;--border:#3a3a3a;--r:10px;--nav-h:64px;--sab:env(safe-area-inset-bottom,0px)}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top);padding-bottom:calc(var(--nav-h) + var(--sab))}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding-top:constant(safe-area-inset-top);padding-top:env(safe-area-inset-top);padding-bottom:calc(var(--nav-h) + var(--sab));touch-action:manipulation}
 .page{display:none;padding:16px;max-width:480px;margin:0 auto}
 .page.active{display:block}
 h2{font-size:18px;font-weight:600;margin-bottom:14px;color:var(--text)}
@@ -134,7 +134,7 @@ select option{background:var(--bg3)}
       <div class="stat-value" id="dash-cash">HK$0</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">加密貨幣</div>
+      <div class="stat-label">投資帳戶</div>
       <div class="stat-value" id="dash-crypto">HK$0</div>
     </div>
     <div class="stat-card">
@@ -152,12 +152,7 @@ select option{background:var(--bg3)}
   </div>
 </div>
 
-<div id="page-banks" class="page">
-  <div style="padding-top:12px"></div>
-  <h2>銀行帳戶</h2>
-  <div id="banks-list"></div>
-  <button class="fab" onclick="openModal_Bank()">+</button>
-</div>
+
 
 <div id="page-txns" class="page">
   <div style="padding-top:12px"></div>
@@ -225,7 +220,14 @@ select option{background:var(--bg3)}
   </div>
   <div class="card">
     <div class="section-header">
-      <h3>加密貨幣</h3>
+      <h3>銀行帳戶</h3>
+      <button class="btn btn-sm" onclick="openModal_Bank()">+ 新增</button>
+    </div>
+    <div id="banks-list"></div>
+  </div>
+  <div class="card">
+    <div class="section-header">
+      <h3>投資帳戶</h3>
       <button class="btn btn-sm" onclick="openModal('modal-crypto')">+ 新增</button>
     </div>
     <div id="crypto-list"></div>
@@ -268,11 +270,10 @@ select option{background:var(--bg3)}
 <!-- BOTTOM NAV -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="goPage('dash',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='3' width='7' height='7' rx='1.2'/><rect x='14' y='3' width='7' height='7' rx='1.2'/><rect x='3' y='14' width='7' height='7' rx='1.2'/><rect x='14' y='14' width='7' height='7' rx='1.2'/></svg>總覽</button>
-  <button class="nav-item" onclick="goPage('banks',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><line x1='3' y1='21' x2='21' y2='21'/><line x1='5' y1='21' x2='5' y2='11'/><line x1='9' y1='21' x2='9' y2='11'/><line x1='15' y1='21' x2='15' y2='11'/><line x1='19' y1='21' x2='19' y2='11'/><polygon points='12 2 2 9 22 9 12 2'/></svg>銀行</button>
+  <button class="nav-item" onclick="goPage('assets',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>資產</button>
   <button class="nav-item" onclick="goPage('txns',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='8' x2='19' y2='8'/><polyline points='15 4 19 8 15 12'/><line x1='19' y1='16' x2='5' y2='16'/><polyline points='9 20 5 16 9 12'/></svg>交易</button>
   <button class="nav-item" onclick="goPage('poker',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='8' width='13' height='15' rx='2'/><path d='M5 8V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-2'/></svg>撲克</button>
   <button class="nav-item" onclick="goPage('loans',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='9'/><polyline points='12 7 12 12 15.5 15.5'/></svg>借貸</button>
-  <button class="nav-item" onclick="goPage('assets',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/></svg>資產</button>
   <button class="nav-item" onclick="goPage('settings',this)"><svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='3'/><path d='M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z'/></svg>設定</button>
 </nav>
 
@@ -376,12 +377,9 @@ select option{background:var(--bg3)}
 
 <div id="modal-crypto" class="modal-overlay" style="display:none" onclick="closeModalOutside(event,'modal-crypto')">
   <div class="modal">
-    <div class="modal-title" id="modal-crypto-title">新增加密貨幣</div>
+    <div class="modal-title" id="modal-crypto-title">新增投資帳戶</div>
     <input type="hidden" id="crypto-edit-id">
-    <div class="form-row">
-      <div class="form-group"><label>幣種</label><input id="crypto-name" placeholder="例：BTC"></div>
-      <div class="form-group"><label>數量</label><input id="crypto-amount" type="number" placeholder="0" step="any"></div>
-    </div>
+    <div class="form-group"><label>名稱</label><input id="crypto-name" placeholder="例：港股、美股基金"></div>
     <div class="form-group"><label>現值 (HKD)</label><input id="crypto-value" type="number" placeholder="0" step="0.01"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-crypto')">取消</button>
@@ -459,7 +457,6 @@ function goPage(id,el){
   document.getElementById('page-'+id).classList.add('active');
   el.classList.add('active');
   if(id==='dash')renderDash();
-  if(id==='banks')renderBanks();
   if(id==='txns')renderTxns();
   if(id==='poker')renderPoker();
   if(id==='loans')renderLoans();
@@ -505,9 +502,9 @@ function renderDash(){
   // Doughnut
   const dCtx=document.getElementById('chart-doughnut').getContext('2d');
   if(chartDoughnut)chartDoughnut.destroy();
-  const dData=[bankTotal,cash,cryptoTotal,loanLent].map(v=>Math.max(0,v));
-  const dSum=dData.reduce((a,b)=>a+b,0);
-  chartDoughnut=new Chart(dCtx,{type:'doughnut',data:{labels:['銀行','現金','加密','借款'],datasets:[{data:dSum>0?dData:[1],backgroundColor:dSum>0?['#cc785c','#e8a87c','#64b5f6','#81c784']:['#333'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#e8e8e8',font:{size:11},boxWidth:12}}}}});
+  const _dAll=[{l:'銀行',v:Math.max(0,bankTotal),c:'#cc785c'},{l:'現金',v:Math.max(0,cash),c:'#e8a87c'},{l:'投資',v:Math.max(0,cryptoTotal),c:'#64b5f6'},{l:'借款',v:Math.max(0,loanLent),c:'#81c784'}].filter(x=>x.v>0);
+  const dSum=_dAll.reduce((a,x)=>a+x.v,0);
+  chartDoughnut=new Chart(dCtx,{type:'doughnut',data:{labels:_dAll.map(x=>x.l),datasets:[{data:dSum>0?_dAll.map(x=>x.v):[1],backgroundColor:dSum>0?_dAll.map(x=>x.c):['#333'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#e8e8e8',font:{size:11},boxWidth:12}}}}});
   // Bar
   const bCtx=document.getElementById('chart-bar').getContext('2d');
   if(chartBar)chartBar.destroy();
@@ -553,9 +550,9 @@ function saveBank(){
   else banks.push({id:uid(),name,type,balance});
   sv(K.banks,banks);
   closeModal('modal-bank');
-  renderBanks();
+  renderAssets();
 }
-function deleteBank(id){if(confirm('確定刪除？')){sv(K.banks,getBanks().filter(b=>b.id!==id));renderBanks()}}
+function deleteBank(id){if(confirm('確定刪除？')){sv(K.banks,getBanks().filter(b=>b.id!==id));renderAssets()}}
 // override + button
 document.querySelector('[onclick="openModal(\'modal-bank\')"]') && (function(){})();
 
@@ -840,14 +837,15 @@ function deleteLoan(id){if(confirm('確定刪除？')){sv(K.loans,getLoans().fil
 
 // Assets
 function renderAssets(){
+  renderBanks();
   document.getElementById('cash-display').textContent=fmt(getCash());
   document.getElementById('cash-input').value=getCash();
   const crypto=getCrypto();
   const el=document.getElementById('crypto-list');
-  if(!crypto.length)el.innerHTML='<div class="empty">尚無加密貨幣</div>';
+  if(!crypto.length)el.innerHTML='<div class="empty">尚無投資帳戶</div>';
   else el.innerHTML=crypto.map(c=>`<div class="row-item">
     <div class="row-header">
-      <div><div class="row-title">${c.name}</div><div class="row-sub">${c.amount} 枚</div></div>
+      <div><div class="row-title">${c.name}</div></div>
       <div style="display:flex;align-items:center;gap:8px">
         <span class="row-amount amount-neutral">${fmt(c.value)}</span>
         <button class="btn btn-sm btn-ghost" onclick="editCrypto('${c.id}')">編輯</button>
@@ -876,25 +874,23 @@ function saveCash(){
   sv(K.cash,parseFloat(document.getElementById('cash-input').value)||0);
   closeModal('modal-cash');renderAssets();
 }
-function openCryptoModal(){document.getElementById('modal-crypto-title').textContent='新增加密貨幣';document.getElementById('crypto-edit-id').value='';document.getElementById('crypto-name').value='';document.getElementById('crypto-amount').value='';document.getElementById('crypto-value').value='';openModal('modal-crypto')}
+function openCryptoModal(){document.getElementById('modal-crypto-title').textContent='新增投資帳戶';document.getElementById('crypto-edit-id').value='';document.getElementById('crypto-name').value='';document.getElementById('crypto-value').value='';openModal('modal-crypto')}
 function editCrypto(id){
   const c=getCrypto().find(x=>x.id===id);if(!c)return;
-  document.getElementById('modal-crypto-title').textContent='編輯加密貨幣';
+  document.getElementById('modal-crypto-title').textContent='編輯投資帳戶';
   document.getElementById('crypto-edit-id').value=id;
   document.getElementById('crypto-name').value=c.name;
-  document.getElementById('crypto-amount').value=c.amount;
   document.getElementById('crypto-value').value=c.value;
   openModal('modal-crypto');
 }
 function saveCrypto(){
   const name=document.getElementById('crypto-name').value.trim();
-  const amount=parseFloat(document.getElementById('crypto-amount').value)||0;
   const value=parseFloat(document.getElementById('crypto-value').value)||0;
-  if(!name)return alert('請輸入幣種名稱');
+  if(!name)return alert('請輸入名稱');
   const id=document.getElementById('crypto-edit-id').value;
   const crypto=getCrypto();
-  if(id){const i=crypto.findIndex(c=>c.id===id);if(i>=0)crypto[i]={...crypto[i],name,amount,value};}
-  else crypto.push({id:uid(),name,amount,value});
+  if(id){const i=crypto.findIndex(c=>c.id===id);if(i>=0)crypto[i]={...crypto[i],name,value};}
+  else crypto.push({id:uid(),name,value});
   sv(K.crypto,crypto);closeModal('modal-crypto');renderAssets();
 }
 function deleteCrypto(id){if(confirm('確定刪除？')){sv(K.crypto,getCrypto().filter(c=>c.id!==id));renderAssets()}}
