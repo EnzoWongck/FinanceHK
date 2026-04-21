@@ -773,7 +773,30 @@ function updTxnCats(){
   const sel=document.getElementById('txn-category');
   if(!sel)return;
   const cats=txnType==='income'?getIncCats():getExpCats();
-  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('')+'<option value="__new__">＋ 新增類別</option>';
+}
+function onTxnCatChange(sel){
+  const row=document.getElementById('txn-new-cat-row');
+  if(sel.value==='__new__'){
+    row.style.display='block';
+    document.getElementById('txn-new-cat-input').value='';
+    setTimeout(()=>document.getElementById('txn-new-cat-input').focus(),50);
+  } else {
+    row.style.display='none';
+  }
+}
+function confirmTxnNewCat(){
+  const input=document.getElementById('txn-new-cat-input');
+  const name=input.value.trim();
+  if(!name)return;
+  const key=txnType==='income'?K.incCats:K.expCats;
+  const cats=txnType==='income'?getIncCats():getExpCats();
+  if(cats.includes(name)){alert('此類別已存在');return;}
+  cats.push(name);
+  sv(key,cats);
+  updTxnCats();
+  document.getElementById('txn-category').value=name;
+  document.getElementById('txn-new-cat-row').style.display='none';
 }
 function renderTxns(){
   const m=document.getElementById('txn-month').value;
