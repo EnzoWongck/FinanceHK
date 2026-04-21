@@ -1121,7 +1121,6 @@ function renderAssets(){
   const rows=[
     {label:'銀行',value:bankTotal,color:'#9d86f8',items:banks.map(b=>({name:b.name,value:b.balance}))},
     {label:'加密',value:cryptoTotal,color:'#64b5f6',items:crypto.map(c=>({name:c.name,value:c.value}))},
-    {label:'潑出去的水',value:loanLent,color:'#b194ff',items:loans.filter(l=>l.ltype==='lent'&&!l.settled).map(l=>({name:l.person,value:calcLoanTotal(l)}))},
     {label:'現金',value:cash,color:'#5ab79f',items:[{name:'手頭現金',value:cash}]}
   ];
   customCats.forEach(c=>{
