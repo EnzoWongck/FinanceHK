@@ -99,22 +99,29 @@ select option{background:var(--bg3)}
 .btn-icon-del{background:none;border:none;color:var(--text2);cursor:pointer;padding:5px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color .15s;flex-shrink:0}
 .btn-icon-del:hover{color:var(--primary)}
 .btn-icon-del svg{width:15px;height:15px;display:block}
-/* Month picker */
-.month-picker-btn{background:none;border:none;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;padding:4px 10px;border-radius:8px;display:flex;align-items:center;gap:4px;opacity:.9}
-.month-picker-btn:active{background:var(--bg3)}
-/* Monthly summary cards */
-.msummary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.mcard{border-radius:12px;padding:14px;cursor:pointer;border:1px solid var(--border);transition:opacity .15s;position:relative;overflow:hidden}
-.mcard:active{opacity:.75}
-.mcard-label{font-size:11px;margin-bottom:6px;font-weight:600;letter-spacing:.5px}
-.mcard-value{font-size:20px;font-weight:700}
-.mcard-exp{background:rgba(244,67,54,.1);border-color:rgba(244,67,54,.25)}
-.mcard-inc{background:rgba(100,181,246,.1);border-color:rgba(100,181,246,.25)}
-.mcard-exp .mcard-label{color:#f44336}
-.mcard-inc .mcard-label{color:#64b5f6}
-.mcard-exp .mcard-value{color:#f44336}
-.mcard-inc .mcard-value{color:#64b5f6}
-/* Chart center overlay */
+/* Monthly summary unified card */
+.msum-card{margin-bottom:12px}
+.msum-month-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px}
+.msum-nav{background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:4px 10px;border-radius:6px;line-height:1;transition:color .15s}
+.msum-nav:active{color:var(--primary)}
+.msum-month-btn{background:none;border:none;color:var(--text);font-size:15px;font-weight:700;cursor:pointer;padding:4px 14px;border-radius:8px;min-width:120px;text-align:center}
+.msum-month-btn:active{background:var(--bg3)}
+.msum-stats{display:flex;justify-content:space-between;align-items:flex-start;padding:0 6px;margin-bottom:2px}
+.msum-stat{cursor:pointer;padding:4px 0;transition:opacity .15s;flex:1}
+.msum-stat:active{opacity:.65}
+.msum-exp{text-align:left}
+.msum-inc{text-align:right}
+.msum-stat-label{font-size:12px;font-weight:600;margin-bottom:5px}
+.msum-stat-value{font-size:21px;font-weight:700}
+.msum-exp .msum-stat-label{color:#e8865a}
+.msum-inc .msum-stat-label{color:#64b5f6}
+.msum-exp .msum-stat-value{color:#e8865a}
+.msum-inc .msum-stat-value{color:#64b5f6}
+.msum-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1.4}
+.msum-center-emoji{font-size:20px;margin-bottom:1px}
+.msum-center-sub{font-size:10px;color:var(--text2);margin-bottom:1px}
+.msum-center-val{font-size:15px;font-weight:700}
+/* Chart center overlay (breakdown page) */
 .chart-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1.3}
 .chart-center .cc-val{font-size:13px;font-weight:700}
 .chart-center .cc-sub{font-size:10px;color:var(--text2)}
@@ -133,10 +140,7 @@ select option{background:var(--bg3)}
 
 <!-- PAGES -->
 <div id="page-dash" class="page active">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0 2px">
-    <h2 style="margin:0">總覽</h2>
-    <button class="month-picker-btn" id="dash-month-btn" onclick="openMonthPicker()">▼</button>
-  </div>
+  <div style="padding-top:12px"></div>
   <div class="nw-card">
     <div class="nw-label">總資產淨值</div>
     <div class="nw-value" id="nw-total">HK$0</div>
@@ -173,22 +177,28 @@ select option{background:var(--bg3)}
     <h3>資產分佈</h3>
     <div class="chart-wrap"><canvas id="chart-doughnut"></canvas></div>
   </div>
-  <div class="msummary-grid">
-    <div class="mcard mcard-exp" onclick="openBreakdown('expense')">
-      <div class="mcard-label">月支出</div>
-      <div class="mcard-value" id="dash-month-exp">HK$0</div>
+  <div class="card msum-card">
+    <div class="msum-month-row">
+      <button class="msum-nav" onclick="shiftDashMonth(-1)">◀</button>
+      <button class="msum-month-btn" id="dash-month-btn" onclick="openMonthPicker()">2026年4月</button>
+      <button class="msum-nav" onclick="shiftDashMonth(1)">▶</button>
     </div>
-    <div class="mcard mcard-inc" onclick="openBreakdown('income')">
-      <div class="mcard-label">月收入</div>
-      <div class="mcard-value" id="dash-month-inc">HK$0</div>
+    <div class="msum-stats">
+      <div class="msum-stat msum-exp" onclick="openBreakdown('expense')">
+        <div class="msum-stat-label">月支出 ›</div>
+        <div class="msum-stat-value" id="dash-month-exp">HK$0</div>
+      </div>
+      <div class="msum-stat msum-inc" onclick="openBreakdown('income')">
+        <div class="msum-stat-label">月收入 ›</div>
+        <div class="msum-stat-value" id="dash-month-inc">HK$0</div>
+      </div>
     </div>
-  </div>
-  <div class="card" style="padding-bottom:14px">
-    <div class="chart-wrap" style="height:160px;position:relative">
+    <div style="position:relative;height:200px;margin-top:6px">
       <canvas id="chart-monthly"></canvas>
-      <div class="chart-center">
-        <div class="cc-sub">月結餘</div>
-        <div class="cc-val" id="chart-monthly-balance">HK$0</div>
+      <div class="msum-center">
+        <div class="msum-center-emoji">🪙</div>
+        <div class="msum-center-sub">月結餘</div>
+        <div class="msum-center-val" id="chart-monthly-balance">HK$0</div>
       </div>
     </div>
   </div>
@@ -610,7 +620,7 @@ function renderDash(){
   document.getElementById('dash-cards').textContent=fmt(cardTotal);
   // Month label button
   const [mY,mM]=dashMonth.split('-');
-  document.getElementById('dash-month-btn').textContent=`${mY}年 ${parseInt(mM)}月 ▼`;
+  document.getElementById('dash-month-btn').textContent=`${mY}年${parseInt(mM)}月`;
   // Monthly txns
   const mTxns=txns.filter(t=>t.date&&t.date.startsWith(dashMonth));
   const mInc=mTxns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
@@ -1258,6 +1268,12 @@ function closeBreakdown(){
 }
 
 // ── Month picker ────────────────────────────────────────────────────────────────
+function shiftDashMonth(d){
+  const [y,m]=dashMonth.split('-').map(Number);
+  const dt=new Date(y,m-1+d,1);
+  dashMonth=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`;
+  renderDash();
+}
 function openMonthPicker(){
   mpickYear=parseInt(dashMonth.split('-')[0]);
   document.getElementById('mpick-year-label').textContent=mpickYear;
