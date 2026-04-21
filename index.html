@@ -701,7 +701,7 @@ function renderDash(){
   // Asset distribution doughnut
   const dCtx=document.getElementById('chart-doughnut').getContext('2d');
   if(chartDoughnut)chartDoughnut.destroy();
-  const _dAll=[{l:'銀行',v:Math.max(0,bankTotal),c:'#9d86f8'},{l:'現金',v:Math.max(0,cash),c:'#5ab79f'},{l:'投資',v:Math.max(0,cryptoTotal),c:'#64b5f6'},{l:'借款',v:Math.max(0,loanLent),c:'#e8a87c'}].filter(x=>x.v>0);
+  const _dAll=[{l:'銀行',v:Math.max(0,bankTotal),c:'#9d86f8'},{l:'現金',v:Math.max(0,cash),c:'#5ab79f'},{l:'投資',v:Math.max(0,cryptoTotal),c:'#64b5f6'},{l:'潑出去的水',v:Math.max(0,loanLent),c:'#e8a87c'}].filter(x=>x.v>0);
   const dSum=_dAll.reduce((a,x)=>a+x.v,0);
   chartDoughnut=new Chart(dCtx,{type:'doughnut',data:{labels:_dAll.map(x=>x.l),datasets:[{data:dSum>0?_dAll.map(x=>x.v):[1],backgroundColor:dSum>0?_dAll.map(x=>x.c):['#333'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#e8e8e8',font:{size:11},boxWidth:12}}}}});
   // Monthly income/expense donut
