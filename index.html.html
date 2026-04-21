@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finance HK">
+<link rel="manifest" id="pwa-manifest">
+<title>Finance HK</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#1a1a1a;--bg2:#2a2a2a;--bg3:#333333;--text:#e8e8e8;--text2:#999999;--primary:#cc785c;--primary-d:#b8664a;--success:#4caf50;--danger:#f44336;--warning:#ff9800;--border:#3a3a3a;--r:10px;--nav-h:64px;--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+#app{display:flex;flex-direction:column;height:100vh}
+#content{flex:1;overflow-y:auto;padding:16px 16px calc(var(--nav-h) + var(--sab) + 16px)}
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--sab));padding-bottom:var(--sab);background:var(--bg2);border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:8px 2px;border:none;background:none;color:var(--text2);font-size:9px;transition:color .2s}
+.nav-item.active{color:var(--primary)}
+.nav-item svg{width:22px;height:22px}
+.section{display:none}.section.active{display:block}
+.card{background:var(--bg2);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.card-sm{padding:12px}
+.card-title{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.card-value{font-size:24px;font-weight:700}
+.card-value.sm{font-size:18px}
+.nw-card{background:var(--bg2);border-radius:var(--r);padding:20px;margin-bottom:12px;border:1px solid var(--primary);border-left-width:3px}
+.nw-card .lbl{color:var(--primary);font-size:13px;margin-bottom:4px}
+.nw-card .amt{font-size:32px;font-weight:800;letter-spacing:-.5px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.asset-card{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--border)}
+.asset-card .icon{font-size:20px;margin-bottom:6px}
+.asset-card .lbl{font-size:11px;color:var(--text2);margin-bottom:4px}
+.asset-card .val{font-size:15px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:all .2s;text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-d)}
+.btn-success{background:var(--success);color:#fff}
+.btn-danger{background:#dc262633;color:var(--danger);border:1px solid #dc262633}
+.btn-ghost{background:var(--bg3);color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:13px}
+.btn-full{width:100%}
+#fab{position:fixed;right:20px;bottom:calc(var(--nav-h) + var(--sab) + 16px);width:52px;height:52px;border-radius:50%;background:var(--primary);color:#fff;border:none;cursor:pointer;font-size:24px;z-index:99;box-shadow:0 4px 20px #3b82f666;display:flex;align-items:center;justify-content:center;transition:transform .2s}
+#fab:hover{transform:scale(1.1)}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:20px;font-weight:700}
+.modal-overlay{display:none;position:fixed;inset:0;background:#000a;z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding-bottom:calc(20px + var(--sab))}
+.modal-handle{width:40px;height:4px;background:var(--bg3);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.form-group{margin-bottom:14px}
+.form-label{font-size:13px;color:var(--text2);margin-bottom:6px;display:block}
+.form-input,.form-select,.form-textarea{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--primary)}
+.form-select option{background:var(--bg2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tab-bar{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;background:var(--bg3);color:var(--text2)}
+.tab-btn.active{background:var(--primary);color:#fff}
+.list-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.list-item:last-child{border-bottom:none}
+.list-item-left{flex:1}
+.list-item-title{font-size:15px;font-weight:600}
+.list-item-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.badge-success{background:#4caf5022;color:var(--success)}
+.badge-danger{background:#f4433622;color:var(--danger)}
+.badge-warning{background:#ff980022;color:var(--warning)}
+.badge-info{background:#cc785c22;color:var(--primary)}
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-box{background:var(--bg2);border-radius:10px;padding:14px;border:1px solid var(--border);text-align:center}
+.stat-box .val{font-size:18px;font-weight:700}
+.stat-box .lbl{font-size:11px;color:var(--text2);margin-top:4px}
+.divider{height:1px;background:var(--border);margin:12px 0}
+.empty{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-icon{font-size:40px;margin-bottom:12px}
+.positive{color:var(--success)}.negative{color:var(--danger)}.neutral{color:var(--text2)}
+.chart-container{position:relative;height:220px;margin:8px 0}
+.toggle-group{display:flex;gap:8px}
+.toggle-btn{flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:14px;font-weight:600;text-align:center;transition:all .2s}
+.toggle-btn.income-on{border-color:var(--success);color:var(--success);background:#4caf5011}
+.toggle-btn.expense-on{border-color:var(--danger);color:var(--danger);background:#f4433611}
+.type-btn{flex:1;padding:10px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:14px;font-weight:600;text-align:center;transition:all .2s}
+.type-btn.on{border-color:var(--primary);color:var(--primary);background:#cc785c11}
+.action-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.loan-card{background:var(--bg2);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.loan-row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px}
+.loan-row .key{color:var(--text2)}.loan-row .val{font-weight:600}
+.del-btn{color:var(--danger);background:none;border:none;cursor:pointer;padding:4px 8px;font-size:13px}
+.ip{position:relative}
+.ip-prefix{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none}
+.ip input{padding-left:38px!important}
+.month-select{padding:8px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none}
+.page-header{margin-bottom:20px}
+.page-header h1{font-size:22px;font-weight:800}
+.page-header p{font-size:14px;color:var(--text2);margin-top:4px}
+.summary-bar{display:flex;justify-content:space-around;padding:12px;background:var(--bg3);border-radius:10px;margin-bottom:12px}
+.summary-bar .item{text-align:center}
+.summary-bar .item .v{font-size:15px;font-weight:700}
+.summary-bar .item .l{font-size:11px;color:var(--text2);margin-top:2px}
+.repaid-badge{opacity:.55}
+.crypto-item{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border)}
+.crypto-item:last-child{border-bottom:none}
+.settings-section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin:20px 0 10px;padding:0 4px}
+.cat-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border-radius:8px;margin-bottom:6px}
+.cat-item .cat-name{font-size:14px;font-weight:500;cursor:pointer;flex:1;padding:2px 4px;border-radius:4px;border:1px solid transparent;background:none;color:var(--text);outline:none;transition:border-color .15s}
+.cat-item .cat-name:hover{border-color:var(--border)}
+.cat-item .cat-name:focus{border-color:var(--primary);background:var(--bg2)}
+.cat-add-row{display:flex;gap:8px;margin-top:10px}
+.cat-add-row .form-input{flex:1}
+.page-header h1{font-size:22px;font-weight:800}
+.deleted-cat{color:var(--text2);font-style:italic;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <section id="s-dashboard" class="section active">
+      <div class="page-header">
+        <h1>Finance HK 💰</h1>
+        <p id="dash-date"></p>
+      </div>
+      <div id="dash-nw"></div>
+      <div id="dash-assets"></div>
+      <div class="card"><div class="card-title">本月摘要</div><div id="dash-monthly"></div></div>
+      <div class="card"><div class="card-title">最近交易</div><div id="dash-recent"></div></div>
+    </section>
+
+    <!-- BANK -->
+    <section id="s-bank" class="section">
+      <div class="section-header">
+        <div class="section-title">銀行帳戶</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('m-add-bank')">+ 新增</button>
+      </div>
+      <div class="card card-sm" style="margin-bottom:12px">
+        <div class="card-title">帳戶總計</div>
+        <div class="card-value" id="bank-total">HKD 0</div>
+      </div>
+      <div id="bank-list"></div>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="s-transactions" class="section">
+      <div class="section-header">
+        <div class="section-title">交易記錄</div>
+        <input type="month" class="month-select" id="txn-month" onchange="renderTxns()">
+      </div>
+      <div id="txn-summary-bar"></div>
+      <div class="tab-bar" id="txn-cat-tabs"></div>
+      <div id="txn-list"></div>
+      <div class="card" style="margin-top:16px">
+        <div class="card-title">支出分析</div>
+        <div class="chart-container"><canvas id="chart-pie"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">收支對比（近6個月）</div>
+        <div class="chart-container"><canvas id="chart-bar"></canvas></div>
+      </div>
+    </section>
+
+    <!-- POKER -->
+    <section id="s-poker" class="section">
+      <div class="section-header">
+        <div class="section-title">撲克記錄</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('m-add-poker')">+ 新增</button>
+      </div>
+      <div id="poker-stats"></div>
+      <div id="poker-list"></div>
+    </section>
+
+    <!-- LOANS -->
+    <section id="s-loans" class="section">
+      <div class="section-header">
+        <div class="section-title">借貸管理</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('m-add-loan')">+ 新增</button>
+      </div>
+      <div class="card card-sm" style="margin-bottom:12px" id="loans-total"></div>
+      <div id="loans-list"></div>
+    </section>
+
+    <!-- ASSETS -->
+    <section id="s-assets" class="section">
+      <div class="section-header"><div class="section-title">資產管理</div></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div class="card-title">💵 現金</div><div class="card-value sm" id="cash-val">HKD 0</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('m-cash')">更新</button>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div><div class="card-title">₿ 加密貨幣</div><div class="card-value sm" id="crypto-total-val">HKD 0</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('m-add-crypto')">+ 新增</button>
+        </div>
+        <div id="crypto-list"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div><div class="card-title">💳 信用卡負債</div><div class="card-value sm negative" id="cc-total-val">HKD 0</div></div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('m-add-cc')">+ 新增</button>
+        </div>
+        <div id="cc-list"></div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="s-settings" class="section">
+      <div class="page-header">
+        <h1>設定</h1>
+        <p>自訂類別管理</p>
+      </div>
+
+      <div class="settings-section-label">收入類別管理</div>
+      <div id="settings-inc-list"></div>
+      <div class="cat-add-row">
+        <input type="text" class="form-input" id="new-inc-cat" placeholder="新增收入類別名稱">
+        <button class="btn btn-primary btn-sm" onclick="addCat('income')" style="white-space:nowrap">+ 新增</button>
+      </div>
+
+      <div class="settings-section-label">支出類別管理</div>
+      <div id="settings-exp-list"></div>
+      <div class="cat-add-row">
+        <input type="text" class="form-input" id="new-exp-cat" placeholder="新增支出類別名稱">
+        <button class="btn btn-primary btn-sm" onclick="addCat('expense')" style="white-space:nowrap">+ 新增</button>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+
+  <nav id="bottom-nav">
+    <button class="nav-item active" onclick="nav('dashboard')" id="nav-dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>總覽
+    </button>
+    <button class="nav-item" onclick="nav('bank')" id="nav-bank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 10v11M12 10v11M16 10v11"/></svg>銀行
+    </button>
+    <button class="nav-item" onclick="nav('transactions')" id="nav-transactions">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3"/></svg>交易
+    </button>
+    <button class="nav-item" onclick="nav('poker')" id="nav-poker">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>撲克
+    </button>
+    <button class="nav-item" onclick="nav('loans')" id="nav-loans">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>借貸
+    </button>
+    <button class="nav-item" onclick="nav('assets')" id="nav-assets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10z"/><path d="M15 9.4C14.4 8.5 13.3 8 12 8c-2.2 0-4 1.8-4 4s1.8 4 4 4c1.3 0 2.4-.5 3-1.4M16 8h-4"/></svg>資產
+    </button>
+    <button class="nav-item" onclick="nav('settings')" id="nav-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>設定
+    </button>
+  </nav>
+</div>
+<button id="fab" onclick="openModal('m-add-txn')">+</button>
+
+<!-- ===== MODALS ===== -->
+
+<!-- Add Transaction -->
+<div class="modal-overlay" id="m-add-txn">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增交易</div>
+    <div class="form-group">
+      <div class="toggle-group">
+        <div class="toggle-btn income-on" id="tt-income" onclick="setTxnType('income')">收入</div>
+        <div class="toggle-btn" id="tt-expense" onclick="setTxnType('expense')">支出</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">金額 (HKD)</label>
+      <div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="t-amount" placeholder="0.00" min="0" step="0.01"></div>
+    </div>
+    <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="t-date"></div>
+    <div class="form-group"><label class="form-label">類別</label><select class="form-select" id="t-cat"></select></div>
+    <div class="form-group"><label class="form-label">備注</label><input type="text" class="form-input" id="t-notes" placeholder="選填"></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-txn')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitTxn()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Bank -->
+<div class="modal-overlay" id="m-add-bank">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增銀行帳戶</div>
+    <div class="form-group"><label class="form-label">帳戶名稱</label><input type="text" class="form-input" id="b-name" placeholder="例: HSBC Main"></div>
+    <div class="form-group"><label class="form-label">目前餘額 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="b-balance" placeholder="0.00"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-bank')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitBank()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Bank -->
+<div class="modal-overlay" id="m-upd-bank">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">更新餘額</div>
+    <input type="hidden" id="ub-id">
+    <div class="form-group"><label class="form-label">帳戶</label><input type="text" class="form-input" id="ub-name" readonly style="opacity:.6"></div>
+    <div class="form-group"><label class="form-label">新餘額 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="ub-balance" placeholder="0.00"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-upd-bank')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitBankUpd()">更新</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bank History -->
+<div class="modal-overlay" id="m-bank-hist">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="bh-title">餘額歷史</div>
+    <div id="bh-list"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="closeModal('m-bank-hist')">關閉</button>
+  </div>
+</div>
+
+<!-- Add Poker -->
+<div class="modal-overlay" id="m-add-poker">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增撲克場次</div>
+    <div class="form-group">
+      <div style="display:flex;gap:8px">
+        <div class="type-btn on" id="pt-live" onclick="setPokerType('live')">🏠 Live</div>
+        <div class="type-btn" id="pt-online" onclick="setPokerType('online')">💻 Online</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">日期</label><input type="date" class="form-input" id="p-date"></div>
+    <div class="form-group"><label class="form-label">地點 / 平台</label><input type="text" class="form-input" id="p-loc" placeholder="例: Club ABC"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">買入 (HKD)</label><input type="number" class="form-input" id="p-buyin" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">收回 (HKD)</label><input type="number" class="form-input" id="p-cashout" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">時長（小時）</label><input type="number" class="form-input" id="p-dur" placeholder="0.0" step="0.5"></div>
+    <div class="form-group"><label class="form-label">備注</label><input type="text" class="form-input" id="p-notes" placeholder="選填"></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-poker')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitPoker()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Loan -->
+<div class="modal-overlay" id="m-add-loan">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增借出記錄</div>
+    <div class="form-group"><label class="form-label">借款人</label><input type="text" class="form-input" id="l-name" placeholder="姓名"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">本金 (HKD)</label><input type="number" class="form-input" id="l-principal" placeholder="0"></div>
+      <div class="form-group"><label class="form-label">月息 (%)</label><input type="number" class="form-input" id="l-rate" placeholder="0.0" step="0.1" min="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">借出日期</label><input type="date" class="form-input" id="l-date"></div>
+    <div class="form-group"><label class="form-label">備注</label><input type="text" class="form-input" id="l-notes" placeholder="選填"></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-loan')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitLoan()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Repayment -->
+<div class="modal-overlay" id="m-repay">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">記錄還款</div>
+    <input type="hidden" id="rp-id">
+    <div class="form-group"><label class="form-label">借款人</label><input type="text" class="form-input" id="rp-name" readonly style="opacity:.6"></div>
+    <div class="form-group"><label class="form-label">還款金額 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="rp-amount" placeholder="0"></div></div>
+    <div class="form-group"><label class="form-label">還款日期</label><input type="date" class="form-input" id="rp-date"></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-repay')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitRepay()">確認</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loan Detail -->
+<div class="modal-overlay" id="m-loan-detail">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="ld-title">還款記錄</div>
+    <div id="ld-content"></div>
+    <button class="btn btn-ghost btn-full" style="margin-top:12px" onclick="closeModal('m-loan-detail')">關閉</button>
+  </div>
+</div>
+
+<!-- Update Cash -->
+<div class="modal-overlay" id="m-cash">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">更新現金</div>
+    <div class="form-group"><label class="form-label">現金金額 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="cash-input" placeholder="0"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-cash')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitCash()">更新</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Crypto -->
+<div class="modal-overlay" id="m-add-crypto">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增加密貨幣</div>
+    <div class="form-group"><label class="form-label">名稱 / 代號</label><input type="text" class="form-input" id="cr-name" placeholder="例: Bitcoin (BTC)"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">持有數量</label><input type="number" class="form-input" id="cr-amt" placeholder="0.0" step="any"></div>
+      <div class="form-group"><label class="form-label">買入均價 (HKD)</label><input type="number" class="form-input" id="cr-buy" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">目前價格 (HKD)</label><input type="number" class="form-input" id="cr-cur" placeholder="0"></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-crypto')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitCrypto()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Crypto Price -->
+<div class="modal-overlay" id="m-upd-crypto">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">更新加密貨幣價格</div>
+    <input type="hidden" id="uc-id">
+    <div class="form-group"><label class="form-label">持倉</label><input type="text" class="form-input" id="uc-name" readonly style="opacity:.6"></div>
+    <div class="form-group"><label class="form-label">目前價格 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="uc-price" placeholder="0"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-upd-crypto')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitCryptoUpd()">更新</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Credit Card -->
+<div class="modal-overlay" id="m-add-cc">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">新增信用卡</div>
+    <div class="form-group"><label class="form-label">卡片名稱</label><input type="text" class="form-input" id="cc-name" placeholder="例: HSBC Visa"></div>
+    <div class="form-group"><label class="form-label">目前欠款 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="cc-bal" placeholder="0" min="0"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-add-cc')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitCC()">新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update CC -->
+<div class="modal-overlay" id="m-upd-cc">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">更新信用卡欠款</div>
+    <input type="hidden" id="ucc-id">
+    <div class="form-group"><label class="form-label">卡片</label><input type="text" class="form-input" id="ucc-name" readonly style="opacity:.6"></div>
+    <div class="form-group"><label class="form-label">目前欠款 (HKD)</label><div class="ip"><span class="ip-prefix">$</span><input type="number" class="form-input" id="ucc-bal" placeholder="0" min="0"></div></div>
+    <div class="form-row">
+      <button class="btn btn-ghost btn-full" onclick="closeModal('m-upd-cc')">取消</button>
+      <button class="btn btn-primary btn-full" onclick="submitCCUpd()">更新</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STORAGE
+// ============================================================
+const K={cash:'pf_cash',banks:'pf_banks',txns:'pf_txns',poker:'pf_poker',loans:'pf_loans',crypto:'pf_crypto',cards:'pf_cards',incCats:'pf_inc_cats',expCats:'pf_exp_cats'};
+const ld=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+const sv=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const getCash=()=>ld(K.cash)||0;
+const getBanks=()=>ld(K.banks)||[];
+const getTxns=()=>ld(K.txns)||[];
+const getPoker=()=>ld(K.poker)||[];
+const getLoans=()=>ld(K.loans)||[];
+const getCrypto=()=>ld(K.crypto)||[];
+const getCards=()=>ld(K.cards)||[];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+// ============================================================
+// FORMAT
+// ============================================================
+function hkd(n,sign=false){
+  const v=Number(n)||0,a=Math.abs(v).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0});
+  if(sign&&v>0)return`+HKD ${a}`;
+  if(v<0)return`-HKD ${Math.abs(v).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}`;
+  return`HKD ${a}`;
+}
+function fdate(s){if(!s)return'';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('zh-HK',{month:'short',day:'numeric',year:'numeric'})}
+function today(){return new Date().toISOString().slice(0,10)}
+function ym2label(ym){const[y,m]=ym.split('-');return`${y}/${parseInt(m)}`}
+
+// ============================================================
+// NET WORTH
+// ============================================================
+function calcNW(){
+  const cash=getCash();
+  const bank=getBanks().reduce((s,b)=>s+b.balance,0);
+  const crypto=getCrypto().reduce((s,c)=>s+c.amount*c.curPrice,0);
+  const loans=getLoans().filter(l=>!l.repaid).reduce((s,l)=>s+loanOwed(l),0);
+  const cc=getCards().reduce((s,c)=>s+c.balance,0);
+  return{cash,bank,crypto,loans,cc,total:cash+bank+crypto+loans-cc};
+}
+
+// ============================================================
+// NAV
+// ============================================================
+let curSection='dashboard';
+function nav(s){
+  document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  document.getElementById('nav-'+s).classList.add('active');
+  curSection=s;
+  render(s);
+}
+function render(s){
+  ({dashboard:renderDash,bank:renderBanks,transactions:renderTxns,poker:renderPoker,loans:renderLoans,assets:renderAssets,settings:renderSettings})[s]?.();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id){
+  document.querySelectorAll(`#${id} input[type=date]`).forEach(i=>{if(!i.value)i.value=today()});
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeModal(o.id)}));
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDash(){
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('zh-HK',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const nw=calcNW();
+  document.getElementById('dash-nw').innerHTML=`
+    <div class="nw-card"><div class="lbl">總淨資產</div><div class="amt ${nw.total<0?'negative':''}">${hkd(nw.total)}</div></div>`;
+  document.getElementById('dash-assets').innerHTML=`
+    <div class="grid-2">
+      <div class="asset-card"><div class="icon">💵</div><div class="lbl">現金</div><div class="val">${hkd(nw.cash)}</div></div>
+      <div class="asset-card"><div class="icon">🏦</div><div class="lbl">銀行</div><div class="val">${hkd(nw.bank)}</div></div>
+      <div class="asset-card"><div class="icon">₿</div><div class="lbl">加密貨幣</div><div class="val">${hkd(nw.crypto)}</div></div>
+      <div class="asset-card"><div class="icon">🤝</div><div class="lbl">借出款項</div><div class="val">${hkd(nw.loans)}</div></div>
+    </div>
+    <div class="asset-card" style="margin-bottom:12px"><div class="icon">💳</div><div class="lbl">信用卡負債</div><div class="val negative">-${hkd(nw.cc)}</div></div>`;
+  const now=new Date(),curYM=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const mt=getTxns().filter(t=>t.date.startsWith(curYM));
+  const inc=mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const net=inc-exp;
+  document.getElementById('dash-monthly').innerHTML=`
+    <div class="stats-row">
+      <div class="stat-box"><div class="val positive">${hkd(inc)}</div><div class="lbl">本月收入</div></div>
+      <div class="stat-box"><div class="val negative">${hkd(exp)}</div><div class="lbl">本月支出</div></div>
+    </div>
+    <div style="text-align:center;padding:8px 0">
+      <span style="font-size:13px;color:var(--text2)">本月結餘</span>
+      <span style="font-size:18px;font-weight:700;margin-left:8px" class="${net>=0?'positive':'negative'}">${hkd(net,true)}</span>
+    </div>`;
+  const recent=getTxns().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById('dash-recent').innerHTML=recent.length?recent.map(t=>{const dc=displayCat(t.type,t.category);return`
+    <div class="list-item">
+      <div class="list-item-left">
+        <div class="list-item-title">${dc||`<span class="deleted-cat">已刪除類別</span>`}</div>
+        <div class="list-item-sub">${fdate(t.date)}${t.notes?' · '+t.notes:''}</div>
+      </div>
+      <div class="${t.type==='income'?'positive':'negative'}" style="font-weight:700">${t.type==='income'?'+':'-'}${hkd(t.amount)}</div>
+    </div>`}).join(''):`<div class="empty"><div class="empty-icon">📋</div>尚無交易記錄</div>`;
+}
+
+// ============================================================
+// BANKS
+// ============================================================
+function renderBanks(){
+  const banks=getBanks();
+  document.getElementById('bank-total').textContent=hkd(banks.reduce((s,b)=>s+b.balance,0));
+  document.getElementById('bank-list').innerHTML=banks.length?banks.map(b=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:4px">${b.name}</div>
+          <div style="font-size:22px;font-weight:800">${hkd(b.balance)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">更新: ${fdate(b.updated)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+          <button class="btn btn-primary btn-sm" onclick="openUpdBank('${b.id}')">更新餘額</button>
+          <button class="btn btn-ghost btn-sm" onclick="showBankHist('${b.id}')">歷史</button>
+          <button class="del-btn" onclick="delBank('${b.id}')">刪除</button>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty"><div class="empty-icon">🏦</div>尚無銀行帳戶</div>`;
+}
+function submitBank(){
+  const name=document.getElementById('b-name').value.trim(),bal=parseFloat(document.getElementById('b-balance').value)||0;
+  if(!name){alert('請輸入帳戶名稱');return}
+  const banks=getBanks();banks.push({id:uid(),name,balance:bal,updated:today(),history:[]});sv(K.banks,banks);
+  document.getElementById('b-name').value='';document.getElementById('b-balance').value='';
+  closeModal('m-add-bank');renderBanks();
+}
+function openUpdBank(id){
+  const b=getBanks().find(x=>x.id===id);if(!b)return;
+  document.getElementById('ub-id').value=id;document.getElementById('ub-name').value=b.name;document.getElementById('ub-balance').value=b.balance;
+  openModal('m-upd-bank');
+}
+function submitBankUpd(){
+  const id=document.getElementById('ub-id').value,nb=parseFloat(document.getElementById('ub-balance').value);
+  if(isNaN(nb)){alert('請輸入有效金額');return}
+  const banks=getBanks(),b=banks.find(x=>x.id===id);if(!b)return;
+  b.history.unshift({date:today(),old:b.balance,new:nb});b.balance=nb;b.updated=today();sv(K.banks,banks);
+  closeModal('m-upd-bank');renderBanks();
+}
+function showBankHist(id){
+  const b=getBanks().find(x=>x.id===id);if(!b)return;
+  document.getElementById('bh-title').textContent=b.name+' 餘額歷史';
+  document.getElementById('bh-list').innerHTML=b.history.length?b.history.map(h=>`
+    <div class="list-item">
+      <div class="list-item-left"><div class="list-item-sub">${fdate(h.date)}</div><div style="font-size:13px">${hkd(h.old)} → <strong>${hkd(h.new)}</strong></div></div>
+      <div class="${h.new>=h.old?'positive':'negative'}" style="font-weight:600">${hkd(h.new-h.old,true)}</div>
+    </div>`).join(''):`<div class="empty">尚無歷史記錄</div>`;
+  openModal('m-bank-hist');
+}
+function delBank(id){if(!confirm('確定刪除？'))return;sv(K.banks,getBanks().filter(b=>b.id!==id));renderBanks()}
+
+// ============================================================
+// TRANSACTIONS
+// ============================================================
+const DEFAULT_INC=['Poker (live)','Poker (online)','生活費','薪水','TFT','股息','利息收入','Other'];
+const DEFAULT_EXP=['Poker Loss','購物','停車場','晚餐','午餐','早餐','娛樂','交通','房租','日用品','GAS','禮物','點心','飲品','保險','數位','Other'];
+function getIncCats(){const s=ld(K.incCats);return s!==null?s:[...DEFAULT_INC]}
+function getExpCats(){const s=ld(K.expCats);return s!==null?s:[...DEFAULT_EXP]}
+function initCats(){if(ld(K.incCats)===null)sv(K.incCats,[...DEFAULT_INC]);if(ld(K.expCats)===null)sv(K.expCats,[...DEFAULT_EXP])}
+function displayCat(type,cat){const list=type==='income'?getIncCats():getExpCats();return list.includes(cat)?cat:null}
+let txnType='income',txnCat='all';
+let pieChart=null,barChart=null;
+
+function setTxnType(t){
+  txnType=t;
+  document.getElementById('tt-income').className='toggle-btn'+(t==='income'?' income-on':'');
+  document.getElementById('tt-expense').className='toggle-btn'+(t==='expense'?' expense-on':'');
+  updTxnCats();
+}
+function updTxnCats(){
+  const sel=document.getElementById('t-cat'),cats=txnType==='income'?getIncCats():getExpCats();
+  sel.innerHTML=cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+function renderTxns(){
+  const mEl=document.getElementById('txn-month');
+  if(!mEl.value){const n=new Date();mEl.value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`}
+  const ym=mEl.value;
+  let all=getTxns().filter(t=>t.date.startsWith(ym)).sort((a,b)=>b.date.localeCompare(a.date));
+  const inc=all.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const exp=all.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('txn-summary-bar').innerHTML=`
+    <div class="summary-bar">
+      <div class="item"><div class="v positive">${hkd(inc)}</div><div class="l">收入</div></div>
+      <div class="item"><div class="v negative">${hkd(exp)}</div><div class="l">支出</div></div>
+      <div class="item"><div class="v ${inc-exp>=0?'positive':'negative'}">${hkd(inc-exp,true)}</div><div class="l">結餘</div></div>
+    </div>`;
+  const cats=[...new Set(all.map(t=>t.category))];
+  document.getElementById('txn-cat-tabs').innerHTML=
+    `<button class="tab-btn ${txnCat==='all'?'active':''}" onclick="setTxnCat('all')">全部</button>`+
+    cats.map(c=>`<button class="tab-btn ${txnCat===c?'active':''}" onclick="setTxnCat('${c}')">${c}</button>`).join('');
+  if(txnCat!=='all')all=all.filter(t=>t.category===txnCat);
+  document.getElementById('txn-list').innerHTML=all.length?all.map(t=>{const dc=displayCat(t.type,t.category);return`
+    <div class="card card-sm">
+      <div class="list-item" style="padding:0">
+        <div class="list-item-left">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="badge ${t.type==='income'?'badge-success':'badge-danger'}">${t.type==='income'?'收入':'支出'}</span>
+            ${dc?`<span style="font-weight:600">${dc}</span>`:`<span class="deleted-cat">已刪除類別</span>`}
+          </div>
+          <div class="list-item-sub">${fdate(t.date)}${t.notes?' · '+t.notes:''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="${t.type==='income'?'positive':'negative'}" style="font-weight:700">${t.type==='income'?'+':'-'}${hkd(t.amount)}</div>
+          <button class="del-btn" onclick="delTxn('${t.id}')">✕</button>
+        </div>
+      </div>
+    </div>`}).join(''):`<div class="empty"><div class="empty-icon">📋</div>本月尚無交易記錄</div>`;
+  renderCharts(ym);
+}
+function setTxnCat(c){txnCat=c;renderTxns()}
+function renderCharts(ym){
+  const expTxns=getTxns().filter(t=>t.date.startsWith(ym)&&t.type==='expense');
+  const bycat={};expTxns.forEach(t=>bycat[t.category]=(bycat[t.category]||0)+t.amount);
+  const COLORS=['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#84cc16','#f97316','#14b8a6','#a855f7','#64748b','#fb923c','#4ade80','#60a5fa'];
+  if(pieChart)pieChart.destroy();
+  pieChart=new Chart(document.getElementById('chart-pie'),{type:'doughnut',data:{labels:Object.keys(bycat),datasets:[{data:Object.values(bycat),backgroundColor:COLORS,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#999999',font:{size:11},padding:8}}}}});
+  const months=[],incs=[],exps=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);const m=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push(ym2label(m));const mt=getTxns().filter(t=>t.date.startsWith(m));incs.push(mt.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));exps.push(mt.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0))}
+  if(barChart)barChart.destroy();
+  barChart=new Chart(document.getElementById('chart-bar'),{type:'bar',data:{labels:months,datasets:[{label:'收入',data:incs,backgroundColor:'#4caf5088',borderColor:'#4caf50',borderWidth:1,borderRadius:4},{label:'支出',data:exps,backgroundColor:'#f4433688',borderColor:'#f44336',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#999999',font:{size:11}}}},scales:{x:{ticks:{color:'#777777',font:{size:10}},grid:{color:'#2a2a2a'}},y:{ticks:{color:'#777777',font:{size:10},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:'#33333355'}}}}});
+}
+function submitTxn(){
+  const amt=parseFloat(document.getElementById('t-amount').value),date=document.getElementById('t-date').value,cat=document.getElementById('t-cat').value,notes=document.getElementById('t-notes').value.trim();
+  if(!amt||amt<=0){alert('請輸入有效金額');return}if(!date){alert('請選擇日期');return}
+  const txns=getTxns();txns.push({id:uid(),type:txnType,amount:amt,date,category:cat,notes});sv(K.txns,txns);
+  document.getElementById('t-amount').value='';document.getElementById('t-notes').value='';
+  closeModal('m-add-txn');if(curSection==='transactions')renderTxns();if(curSection==='dashboard')renderDash();
+}
+function delTxn(id){if(!confirm('確定刪除？'))return;sv(K.txns,getTxns().filter(t=>t.id!==id));renderTxns()}
+
+// ============================================================
+// POKER
+// ============================================================
+let pokerType='live';
+function setPokerType(t){
+  pokerType=t;
+  document.getElementById('pt-live').className='type-btn'+(t==='live'?' on':'');
+  document.getElementById('pt-online').className='type-btn'+(t==='online'?' on':'');
+}
+function renderPoker(){
+  const sessions=getPoker().sort((a,b)=>b.date.localeCompare(a.date));
+  const totalPL=sessions.reduce((s,p)=>s+p.profit,0);
+  const wins=sessions.filter(p=>p.profit>0).length;
+  const wr=sessions.length?(wins/sessions.length*100).toFixed(1):0;
+  const best=sessions.length?Math.max(...sessions.map(p=>p.profit)):0;
+  const worst=sessions.length?Math.min(...sessions.map(p=>p.profit)):0;
+  const avg=sessions.length?totalPL/sessions.length:0;
+  const hrs=sessions.reduce((s,p)=>s+(p.duration||0),0);
+  const hrRate=hrs>0?totalPL/hrs:0;
+  document.getElementById('poker-stats').innerHTML=`
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">統計摘要</div>
+      <div style="text-align:center;margin-bottom:14px">
+        <div style="font-size:30px;font-weight:800" class="${totalPL>=0?'positive':'negative'}">${hkd(totalPL,true)}</div>
+        <div style="font-size:12px;color:var(--text2)">總盈虧 · ${sessions.length} 場</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="val">${wr}%</div><div class="lbl">勝率</div></div>
+        <div class="stat-box"><div class="val ${avg>=0?'positive':'negative'}">${hkd(avg,true)}</div><div class="lbl">場均</div></div>
+        <div class="stat-box"><div class="val positive">${hkd(best,true)}</div><div class="lbl">最佳場次</div></div>
+        <div class="stat-box"><div class="val negative">${hkd(worst,true)}</div><div class="lbl">最差場次</div></div>
+        <div class="stat-box"><div class="val">${hrs.toFixed(1)}hr</div><div class="lbl">總時長</div></div>
+        <div class="stat-box"><div class="val ${hrRate>=0?'positive':'negative'}">${hkd(hrRate,true)}</div><div class="lbl">每小時</div></div>
+      </div>
+    </div>`;
+  document.getElementById('poker-list').innerHTML=sessions.length?sessions.map(s=>`
+    <div class="card card-sm">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <span class="badge badge-info">${s.type==='live'?'🏠 Live':'💻 Online'}</span>
+            <span style="font-weight:600">${s.location||''}</span>
+          </div>
+          <div class="list-item-sub">${fdate(s.date)} · ${s.duration||0}hr · 買入 ${hkd(s.buyIn)}</div>
+          ${s.notes?`<div class="list-item-sub">${s.notes}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:18px;font-weight:700" class="${s.profit>=0?'positive':'negative'}">${hkd(s.profit,true)}</div>
+          ${s.duration?`<div style="font-size:11px;color:var(--text2)">${hkd(s.profit/s.duration,true)}/hr</div>`:''}
+          <button class="del-btn" onclick="delPoker('${s.id}')">✕</button>
+        </div>
+      </div>
+    </div>`).join(''):`<div class="empty"><div class="empty-icon">🃏</div>尚無場次記錄</div>`;
+}
+function submitPoker(){
+  const date=document.getElementById('p-date').value;
+  if(!date){alert('請選擇日期');return}
+  const loc=document.getElementById('p-loc').value.trim();
+  const buyIn=parseFloat(document.getElementById('p-buyin').value)||0;
+  const cashOut=parseFloat(document.getElementById('p-cashout').value)||0;
+  const dur=parseFloat(document.getElementById('p-dur').value)||0;
+  const notes=document.getElementById('p-notes').value.trim();
+  const sessions=getPoker();sessions.push({id:uid(),type:pokerType,date,location:loc,buyIn,cashOut,duration:dur,notes,profit:cashOut-buyIn});
+  sv(K.poker,sessions);
+  ['p-date','p-loc','p-buyin','p-cashout','p-dur','p-notes'].forEach(i=>document.getElementById(i).value='');
+  closeModal('m-add-poker');renderPoker();
+}
+function delPoker(id){if(!confirm('確定刪除？'))return;sv(K.poker,getPoker().filter(s=>s.id!==id));renderPoker()}
+
+// ============================================================
+// LOANS
+// ============================================================
+function loanDetails(loan){
+  const start=new Date(loan.date+'T00:00:00'),now=new Date();
+  const months=Math.max(0,(now.getFullYear()-start.getFullYear())*12+(now.getMonth()-start.getMonth()));
+  const monthlyInt=loan.principal*(loan.rate/100);
+  const totalInt=monthlyInt*months;
+  const totalRepaid=(loan.repayments||[]).reduce((s,r)=>s+r.amount,0);
+  const totalOwed=loan.principal+totalInt;
+  const remaining=Math.max(0,totalOwed-totalRepaid);
+  const nextIntDate=nextInterestDate(loan.date);
+  return{months,monthlyInt,totalInt,totalRepaid,totalOwed,remaining,nextIntDate};
+}
+function loanOwed(loan){return loanDetails(loan).remaining}
+function nextInterestDate(loanDate){
+  const d=new Date(loanDate+'T00:00:00'),now=new Date(),day=d.getDate();
+  let next=new Date(now.getFullYear(),now.getMonth(),day);
+  if(next<=now)next=new Date(now.getFullYear(),now.getMonth()+1,day);
+  return next.toISOString().slice(0,10);
+}
+function renderLoans(){
+  const loans=getLoans();
+  const active=loans.filter(l=>!l.repaid);
+  const total=active.reduce((s,l)=>s+loanOwed(l),0);
+  document.getElementById('loans-total').innerHTML=`<div class="card-title">借出總額</div><div class="card-value">${hkd(total)}</div><div style="font-size:12px;color:var(--text2);margin-top:4px">${active.length} 筆未還清</div>`;
+  document.getElementById('loans-list').innerHTML=loans.length?loans.map(loan=>{
+    const d=loanDetails(loan);
+    return`<div class="loan-card ${loan.repaid?'repaid-badge':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:16px;font-weight:700">${loan.borrower}</div>
+          ${loan.notes?`<div style="font-size:12px;color:var(--text2)">${loan.notes}</div>`:''}
+        </div>
+        ${loan.repaid?'<span class="badge badge-success">已還清</span>':''}
+      </div>
+      <div class="loan-row"><span class="key">本金</span><span class="val">${hkd(loan.principal)}</span></div>
+      <div class="loan-row"><span class="key">月息</span><span class="val">${loan.rate}%（每月 ${hkd(d.monthlyInt)}）</span></div>
+      <div class="loan-row"><span class="key">借出日期</span><span class="val">${fdate(loan.date)}</span></div>
+      <div class="loan-row"><span class="key">計息月數</span><span class="val">${d.months} 個月（利息 +${hkd(d.totalInt)}）</span></div>
+      ${!loan.repaid?`<div class="loan-row"><span class="key">下次計息</span><span class="val">${fdate(d.nextIntDate)}</span></div>`:''}
+      <div class="loan-row"><span class="key">已還款</span><span class="val negative">-${hkd(d.totalRepaid)}</span></div>
+      <div class="divider"></div>
+      <div class="loan-row">
+        <span class="key" style="font-weight:700;color:var(--text)">尚欠合計</span>
+        <span class="val" style="font-size:18px;color:var(--warning)">${hkd(d.remaining)}</span>
+      </div>
+      <div class="action-row">
+        ${!loan.repaid?`<button class="btn btn-ghost btn-sm" onclick="openRepay('${loan.id}')">記錄還款</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="showLoanDetail('${loan.id}')">詳情</button>
+        ${!loan.repaid?`<button class="btn btn-success btn-sm" onclick="markRepaid('${loan.id}')">標記還清</button>`:''}
+        ${loan.repaid?`<button class="del-btn" onclick="delLoan('${loan.id}')">刪除記錄</button>`:''}
+      </div>
+    </div>`}).join(''):`<div class="empty"><div class="empty-icon">🤝</div>尚無借貸記錄</div>`;
+}
+function submitLoan(){
+  const borrower=document.getElementById('l-name').value.trim();
+  const principal=parseFloat(document.getElementById('l-principal').value);
+  const rate=parseFloat(document.getElementById('l-rate').value)||0;
+  const date=document.getElementById('l-date').value;
+  const notes=document.getElementById('l-notes').value.trim();
+  if(!borrower){alert('請輸入借款人');return}if(!principal||principal<=0){alert('請輸入有效本金');return}if(!date){alert('請選擇日期');return}
+  const loans=getLoans();loans.push({id:uid(),borrower,principal,rate,date,notes,repayments:[],repaid:false});sv(K.loans,loans);
+  ['l-name','l-principal','l-rate','l-notes'].forEach(i=>document.getElementById(i).value='');
+  closeModal('m-add-loan');renderLoans();
+}
+function openRepay(id){
+  const l=getLoans().find(x=>x.id===id);if(!l)return;
+  document.getElementById('rp-id').value=id;document.getElementById('rp-name').value=l.borrower;
+  document.getElementById('rp-amount').value='';document.getElementById('rp-date').value=today();
+  openModal('m-repay');
+}
+function submitRepay(){
+  const id=document.getElementById('rp-id').value,amt=parseFloat(document.getElementById('rp-amount').value),date=document.getElementById('rp-date').value;
+  if(!amt||amt<=0){alert('請輸入有效金額');return}
+  const loans=getLoans(),l=loans.find(x=>x.id===id);if(!l)return;
+  l.repayments.push({id:uid(),date,amount:amt});sv(K.loans,loans);
+  closeModal('m-repay');renderLoans();
+}
+function markRepaid(id){
+  if(!confirm('確定標記為已還清？'))return;
+  const loans=getLoans(),l=loans.find(x=>x.id===id);if(l){l.repaid=true;sv(K.loans,loans)}renderLoans();
+}
+function delLoan(id){if(!confirm('確定刪除？'))return;sv(K.loans,getLoans().filter(l=>l.id!==id));renderLoans()}
+function showLoanDetail(id){
+  const loan=getLoans().find(l=>l.id===id);if(!loan)return;
+  const d=loanDetails(loan);
+  document.getElementById('ld-title').textContent=loan.borrower+' — 還款記錄';
+  document.getElementById('ld-content').innerHTML=`
+    <div class="card card-sm" style="margin-bottom:12px">
+      <div class="loan-row"><span class="key">本金</span><span class="val">${hkd(loan.principal)}</span></div>
+      <div class="loan-row"><span class="key">總利息</span><span class="val">${hkd(d.totalInt)}</span></div>
+      <div class="loan-row"><span class="key">總欠款</span><span class="val">${hkd(d.totalOwed)}</span></div>
+      <div class="loan-row"><span class="key">已還款</span><span class="val">${hkd(d.totalRepaid)}</span></div>
+      <div class="loan-row"><span class="key" style="color:var(--text);font-weight:700">尚欠</span><span class="val" style="color:var(--warning)">${hkd(d.remaining)}</span></div>
+    </div>
+    ${loan.repayments.length?loan.repayments.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`
+      <div class="list-item">
+        <div class="list-item-sub">${fdate(r.date)}</div>
+        <div class="positive" style="font-weight:600">${hkd(r.amount)}</div>
+      </div>`).join(''):`<div class="empty">尚無還款記錄</div>`}`;
+  openModal('m-loan-detail');
+}
+
+// ============================================================
+// ASSETS
+// ============================================================
+function renderAssets(){
+  document.getElementById('cash-val').textContent=hkd(getCash());
+  const cryptos=getCrypto();
+  const cTotal=cryptos.reduce((s,c)=>s+c.amount*c.curPrice,0);
+  document.getElementById('crypto-total-val').textContent=hkd(cTotal);
+  document.getElementById('crypto-list').innerHTML=cryptos.length?cryptos.map(c=>{
+    const cur=c.amount*c.curPrice,cost=c.amount*c.buyPrice,pnl=cur-cost,pct=cost>0?(pnl/cost*100).toFixed(2):0;
+    return`<div class="crypto-item">
+      <div>
+        <div style="font-weight:700;margin-bottom:4px">${c.name}</div>
+        <div style="font-size:12px;color:var(--text2)">持有: ${c.amount} · 買入均價: ${hkd(c.buyPrice)}</div>
+        <div style="font-size:12px;color:var(--text2)">現價: ${hkd(c.curPrice)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-weight:700">${hkd(cur)}</div>
+        <div style="font-size:12px" class="${pnl>=0?'positive':'negative'}">${hkd(pnl,true)} (${pct}%)</div>
+        <div style="display:flex;gap:4px;margin-top:6px;justify-content:flex-end">
+          <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px" onclick="openUpdCrypto('${c.id}')">更新價格</button>
+          <button class="del-btn" onclick="delCrypto('${c.id}')">✕</button>
+        </div>
+      </div>
+    </div>`}).join(''):`<div style="color:var(--text2);font-size:13px;text-align:center;padding:12px">尚無加密貨幣持倉</div>`;
+  const cards=getCards();
+  const ccT=cards.reduce((s,c)=>s+c.balance,0);
+  document.getElementById('cc-total-val').textContent=hkd(ccT);
+  document.getElementById('cc-list').innerHTML=cards.length?cards.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-weight:600">${c.name}</div><div style="font-size:12px;color:var(--text2)">更新: ${fdate(c.updated)}</div></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="negative" style="font-weight:700">-${hkd(c.balance)}</div>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:4px 8px" onclick="openUpdCC('${c.id}')">更新</button>
+        <button class="del-btn" onclick="delCC('${c.id}')">✕</button>
+      </div>
+    </div>`).join(''):`<div style="color:var(--text2);font-size:13px;text-align:center;padding:12px">尚無信用卡</div>`;
+}
+function submitCash(){
+  const v=parseFloat(document.getElementById('cash-input').value);if(isNaN(v)){alert('請輸入有效金額');return}
+  sv(K.cash,v);closeModal('m-cash');renderAssets();if(curSection==='dashboard')renderDash();
+}
+function submitCrypto(){
+  const name=document.getElementById('cr-name').value.trim(),amt=parseFloat(document.getElementById('cr-amt').value),buy=parseFloat(document.getElementById('cr-buy').value)||0,cur=parseFloat(document.getElementById('cr-cur').value)||buy;
+  if(!name){alert('請輸入名稱');return}if(!amt||amt<=0){alert('請輸入數量');return}
+  const list=getCrypto();list.push({id:uid(),name,amount:amt,buyPrice:buy,curPrice:cur});sv(K.crypto,list);
+  ['cr-name','cr-amt','cr-buy','cr-cur'].forEach(i=>document.getElementById(i).value='');closeModal('m-add-crypto');renderAssets();
+}
+function openUpdCrypto(id){
+  const c=getCrypto().find(x=>x.id===id);if(!c)return;
+  document.getElementById('uc-id').value=id;document.getElementById('uc-name').value=`${c.name} (持有: ${c.amount})`;document.getElementById('uc-price').value=c.curPrice;
+  openModal('m-upd-crypto');
+}
+function submitCryptoUpd(){
+  const id=document.getElementById('uc-id').value,p=parseFloat(document.getElementById('uc-price').value);if(isNaN(p)){alert('請輸入有效價格');return}
+  const list=getCrypto(),c=list.find(x=>x.id===id);if(c){c.curPrice=p;sv(K.crypto,list)}closeModal('m-upd-crypto');renderAssets();
+}
+function delCrypto(id){if(!confirm('確定刪除？'))return;sv(K.crypto,getCrypto().filter(c=>c.id!==id));renderAssets()}
+function submitCC(){
+  const name=document.getElementById('cc-name').value.trim(),bal=parseFloat(document.getElementById('cc-bal').value)||0;
+  if(!name){alert('請輸入卡片名稱');return}
+  const list=getCards();list.push({id:uid(),name,balance:bal,updated:today()});sv(K.cards,list);
+  document.getElementById('cc-name').value='';document.getElementById('cc-bal').value='';closeModal('m-add-cc');renderAssets();
+}
+function openUpdCC(id){
+  const c=getCards().find(x=>x.id===id);if(!c)return;
+  document.getElementById('ucc-id').value=id;document.getElementById('ucc-name').value=c.name;document.getElementById('ucc-bal').value=c.balance;
+  openModal('m-upd-cc');
+}
+function submitCCUpd(){
+  const id=document.getElementById('ucc-id').value,bal=parseFloat(document.getElementById('ucc-bal').value);if(isNaN(bal)){alert('請輸入有效金額');return}
+  const list=getCards(),c=list.find(x=>x.id===id);if(c){c.balance=bal;c.updated=today();sv(K.cards,list)}closeModal('m-upd-cc');renderAssets();
+}
+function delCC(id){if(!confirm('確定刪除？'))return;sv(K.cards,getCards().filter(c=>c.id!==id));renderAssets()}
+
+// ============================================================
+// SETTINGS / CATEGORY MANAGEMENT
+// ============================================================
+function renderSettings(){
+  renderCatList('income');
+  renderCatList('expense');
+}
+function renderCatList(type){
+  const isInc=type==='income';
+  const cats=isInc?getIncCats():getExpCats();
+  const txns=getTxns();
+  const listEl=document.getElementById(isInc?'settings-inc-list':'settings-exp-list');
+  listEl.innerHTML=cats.length?cats.map(c=>{
+    const count=txns.filter(t=>t.category===c&&t.type===type).length;
+    const safe=c.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return`<div class="cat-item">
+      <input class="cat-name" value="${c.replace(/"/g,'&quot;')}"
+        data-type="${type}" data-old="${safe}"
+        onblur="renameCat(this)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=this.dataset.old;this.blur()}">
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        ${count>0?`<span style="font-size:11px;color:var(--text2)">${count}筆</span>`:''}
+        <button class="del-btn" onclick="delCat('${type}','${safe}')" title="刪除">✕</button>
+      </div>
+    </div>`;
+  }).join(''):`<div style="color:var(--text2);font-size:13px;padding:12px 4px">尚無類別</div>`;
+}
+function addCat(type){
+  const isInc=type==='income';
+  const inputId=isInc?'new-inc-cat':'new-exp-cat';
+  const name=document.getElementById(inputId).value.trim();
+  if(!name){alert('請輸入類別名稱');return}
+  const cats=isInc?getIncCats():getExpCats();
+  if(cats.includes(name)){alert('此類別已存在');return}
+  cats.push(name);
+  sv(isInc?K.incCats:K.expCats,cats);
+  document.getElementById(inputId).value='';
+  renderCatList(type);
+  updTxnCats();
+}
+function delCat(type,name){
+  const isInc=type==='income';
+  const key=isInc?K.incCats:K.expCats;
+  const cats=(isInc?getIncCats():getExpCats()).filter(c=>c!==name);
+  sv(key,cats);
+  renderCatList(type);
+  updTxnCats();
+}
+function renameCat(input){
+  const type=input.dataset.type,oldName=input.dataset.old,newName=input.value.trim();
+  if(!newName){input.value=oldName;return}
+  if(newName===oldName)return;
+  const isInc=type==='income';
+  const key=isInc?K.incCats:K.expCats;
+  const cats=isInc?getIncCats():getExpCats();
+  if(cats.includes(newName)){alert('此類別已存在');input.value=oldName;return}
+  cats[cats.indexOf(oldName)]=newName;
+  sv(key,cats);
+  // update all transactions using old name
+  const txns=getTxns().map(t=>t.type===type&&t.category===oldName?{...t,category:newName}:t);
+  sv(K.txns,txns);
+  input.dataset.old=newName;
+  updTxnCats();
+}
+
+// ============================================================
+// PWA
+// ============================================================
+function setupPWA(){
+  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#1a1a1a';ctx.fillRect(0,0,512,512);
+  ctx.fillStyle='#cc785c';ctx.font='bold 280px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',256,256);
+  const icon=canvas.toDataURL('image/png');
+  const manifest={name:'Finance HK',short_name:'Finance HK',description:'Personal Finance Tracker',start_url:'./',display:'standalone',background_color:'#1a1a1a',theme_color:'#1a1a1a',icons:[{src:icon,sizes:'512x512',type:'image/png'}]};
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/manifest+json'});
+  document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
+  if('serviceWorker' in navigator){
+    const sw=`const C='fhk-v1';self.addEventListener('install',e=>{self.skipWaiting()});self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  setupPWA();
+  initCats();
+  updTxnCats();
+  const n=new Date();
+  document.getElementById('txn-month').value=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
+  renderDash();
+});
+</script>
+</body>
+</html>
