@@ -184,15 +184,15 @@ select option{background:var(--bg3)}
   <div class="nw-card">
     <div class="nw-growth">▲ +1.54%</div>
     <div class="nw-label">總資產淨值</div>
-    <div class="nw-value" id="nw-total">0</div>
+    <div class="nw-value" id="nw-total">$0</div>
     <div class="nw-sub">
       <div class="nw-sub-item">
         <div class="nw-sub-label">資產</div>
-        <div class="nw-sub-value pos" id="nw-assets">0</div>
+        <div class="nw-sub-value pos" id="nw-assets">$0</div>
       </div>
       <div class="nw-sub-item">
         <div class="nw-sub-label">負債</div>
-        <div class="nw-sub-value neg" id="nw-liab">0</div>
+        <div class="nw-sub-value neg" id="nw-liab">$0</div>
       </div>
     </div>
     <canvas id="chart-networth-trend" class="hero-sparkline"></canvas>
@@ -200,19 +200,19 @@ select option{background:var(--bg3)}
   <div class="stat-grid">
     <div class="stat-card">
       <div class="stat-label"><span class="stat-dot" style="background:#8e6ee9"></span>銀行存款</div>
-      <div class="stat-value" id="dash-banks">0</div>
+      <div class="stat-value" id="dash-banks">$0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><span class="stat-dot" style="background:#64b5f6"></span>投資帳號</div>
-      <div class="stat-value" id="dash-crypto">0</div>
+      <div class="stat-value" id="dash-crypto">$0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><span class="stat-dot" style="background:#5ab79f"></span>現金</div>
-      <div class="stat-value" id="dash-cash">0</div>
+      <div class="stat-value" id="dash-cash">$0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label"><span class="stat-dot" style="background:#b56e6f"></span>信用卡</div>
-      <div class="stat-value amount-neg" id="dash-cards">0</div>
+      <div class="stat-value amount-neg" id="dash-cards">$0</div>
     </div>
   </div>
   <div class="card">
@@ -228,18 +228,18 @@ select option{background:var(--bg3)}
     <div class="msum-stats">
       <div class="msum-stat msum-exp" onclick="openBreakdown('expense')">
         <div class="msum-stat-label">月支出 ›</div>
-        <div class="msum-stat-value" id="dash-month-exp">0</div>
+        <div class="msum-stat-value" id="dash-month-exp">$0</div>
       </div>
       <div class="msum-stat msum-inc" onclick="openBreakdown('income')">
         <div class="msum-stat-label">月收入 ›</div>
-        <div class="msum-stat-value" id="dash-month-inc">0</div>
+        <div class="msum-stat-value" id="dash-month-inc">$0</div>
       </div>
     </div>
     <div style="position:relative;height:200px;margin-top:6px">
       <canvas id="chart-monthly"></canvas>
       <div class="msum-center">
         <div class="msum-center-sub">月結餘</div>
-        <div class="msum-center-val" id="chart-monthly-balance">0</div>
+        <div class="msum-center-val" id="chart-monthly-balance">$0</div>
       </div>
     </div>
   </div>
@@ -258,7 +258,7 @@ select option{background:var(--bg3)}
         <canvas id="chart-breakdown"></canvas>
         <div class="chart-center" style="top:50%;left:50%">
           <div class="cc-sub">總計</div>
-          <div class="cc-val" id="breakdown-total-text">0</div>
+          <div class="cc-val" id="breakdown-total-text">$0</div>
         </div>
       </div>
       <div id="breakdown-legend" style="flex:1;font-size:12px;line-height:1.8"></div>
@@ -289,7 +289,7 @@ select option{background:var(--bg3)}
   <div class="stat-grid">
     <div class="stat-card">
       <div class="stat-label">總盈虧</div>
-      <div class="stat-value" id="poker-total">0</div>
+      <div class="stat-value" id="poker-total">$0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">局數</div>
@@ -306,11 +306,11 @@ select option{background:var(--bg3)}
   <div class="stat-grid">
     <div class="stat-card">
       <div class="stat-label">借款</div>
-      <div class="stat-value amount-pos" id="loans-recv">0</div>
+      <div class="stat-value amount-pos" id="loans-recv">$0</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">應還</div>
-      <div class="stat-value amount-neg" id="loans-owe">0</div>
+      <div class="stat-value amount-neg" id="loans-owe">$0</div>
     </div>
   </div>
   <div id="loans-list"></div>
@@ -325,8 +325,8 @@ select option{background:var(--bg3)}
   <div style="color:var(--text2);margin-top:-8px;margin-bottom:12px">Assets</div>
   <div class="card">
     <div class="nw-label">總資產</div>
-    <div class="nw-value" id="assets-total">0</div>
-    <div style="margin-top:10px;color:var(--success)" id="assets-trend">+0.00% · +0</div>
+    <div class="nw-value" id="assets-total">$0</div>
+    <div style="margin-top:10px;color:var(--success)" id="assets-trend">+0.00% · +$0</div>
   </div>
   <h3 style="margin:2px 4px 8px">分類 - BY CATEGORY</h3>
   <div id="assets-category-list" class="asset-cat-list"></div>
