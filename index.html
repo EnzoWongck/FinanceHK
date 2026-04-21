@@ -569,16 +569,17 @@ function renderTxns(){
   el.innerHTML=txns.map(t=>{
     const cat=displayCat(t.type,t.category);
     const catDisplay=cat?cat:'<span class="deleted-cat">已刪除類別</span>';
+    const pokerBadge=t.pokerLinked?'<span style="font-size:11px;margin-left:4px;opacity:.7">🃏</span>':'';
     return `<div class="row-item">
       <div class="row-header">
         <div>
-          <div class="row-title">${t.note||catDisplay}</div>
+          <div class="row-title">${t.note||catDisplay}${pokerBadge}</div>
           <div class="row-sub">${t.date} &nbsp;<span class="badge badge-${t.type}">${t.type==='income'?'收入':'支出'}</span> &nbsp;${t.note?catDisplay:''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span class="row-amount ${t.type==='income'?'amount-pos':'amount-neg'}">${t.type==='income'?'+':'-'}${fmt(t.amount)}</span>
-          <button class="btn btn-sm btn-ghost" onclick="editTxn('${t.id}')">編輯</button>
-          <button class="btn-icon-del" onclick="deleteTxn('${t.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          ${t.pokerLinked?'<span style="font-size:10px;color:var(--text2);padding:0 4px">自動</span>':'<button class="btn btn-sm btn-ghost" onclick="editTxn(''+t.id+'')">編輯</button>'}
+          <button class="btn-icon-del" onclick="${t.pokerLinked?'alert('此交易由撲克記錄自動生成，請在撲克頁編輯')':'deleteTxn(''+t.id+'')'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
     </div>`;
@@ -672,6 +673,25 @@ function editPoker(id){
   document.getElementById('poker-note').value=p.note||'';
   openModal('modal-poker');
 }
+function syncPokerTxn(session){
+  const pnl=session.cashout-session.buyin;
+  const txns=getTxns().filter(t=>t.id!==session.txnId);
+  if(pnl!==0){
+    const vLow=(session.venue||'').toLowerCase();
+    const isOnline=vLow.includes('online')||vLow.includes('網上');
+    const isProfit=pnl>0;
+    txns.push({
+      id:session.txnId,
+      date:session.date,
+      amount:Math.abs(pnl),
+      category:isProfit?(isOnline?'Poker (online)':'Poker (live)'):'Poker Loss',
+      note:(isProfit?'撲克盈利':'撲克虧損')+(session.venue?' - '+session.venue:''),
+      type:isProfit?'income':'expense',
+      pokerLinked:true
+    });
+  }
+  sv(K.txns,txns);
+}
 function savePoker(){
   const date=document.getElementById('poker-date').value;
   const venue=document.getElementById('poker-venue').value.trim();
@@ -679,15 +699,31 @@ function savePoker(){
   const cashout=parseFloat(document.getElementById('poker-cashout').value)||0;
   const note=document.getElementById('poker-note').value.trim();
   if(!date)return alert('請填寫日期');
-  const id=document.getElementById('poker-edit-id').value;
+  const editId=document.getElementById('poker-edit-id').value;
   const sessions=getPoker();
-  if(id){const i=sessions.findIndex(p=>p.id===id);if(i>=0)sessions[i]={...sessions[i],date,venue,buyin,cashout,note};}
-  else sessions.push({id:uid(),date,venue,buyin,cashout,note});
+  let session;
+  if(editId){
+    const i=sessions.findIndex(p=>p.id===editId);
+    if(i>=0){
+      sessions[i]={...sessions[i],date,venue,buyin,cashout,note,txnId:sessions[i].txnId||uid()};
+      session=sessions[i];
+    }
+  } else {
+    session={id:uid(),date,venue,buyin,cashout,note,txnId:uid()};
+    sessions.push(session);
+  }
   sv(K.poker,sessions);
+  if(session)syncPokerTxn(session);
   closeModal('modal-poker');
   renderPoker();
 }
-function deletePoker(id){if(confirm('確定刪除？')){sv(K.poker,getPoker().filter(p=>p.id!==id));renderPoker()}}
+function deletePoker(id){
+  if(!confirm('確定刪除？'))return;
+  const session=getPoker().find(p=>p.id===id);
+  if(session?.txnId)sv(K.txns,getTxns().filter(t=>t.id!==session.txnId));
+  sv(K.poker,getPoker().filter(p=>p.id!==id));
+  renderPoker();
+}
 
 // Loans
 let loanType='lent';
