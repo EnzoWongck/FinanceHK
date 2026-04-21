@@ -592,8 +592,8 @@ function getAssetCats(){return ld(K.assetCats)||[]}
 
 // Utils
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
-function fmt(n){return 'HK$'+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
-function fmtSigned(n){return (n>=0?'+':'-')+' HK$'+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmt(n){return Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
+function fmtSigned(n){return (n>=0?'+':'-')+' '+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
 
 // Navigation
 function goPage(id,el){
@@ -884,7 +884,7 @@ function deleteTxn(id){
 function renderPoker(){
   const sessions=getPoker();
   const total=sessions.reduce((s,p)=>s+(p.cashout-p.buyin),0);
-  document.getElementById('poker-total').textContent=(total>=0?'+':'')+fmt(total).replace('HK$',(total>=0?'':''));
+  document.getElementById('poker-total').textContent=(total>=0?'+':'-')+fmt(Math.abs(total));
   document.getElementById('poker-total').className='stat-value '+(total>=0?'amount-pos':'amount-neg');
   document.getElementById('poker-count').textContent=sessions.length;
   const el=document.getElementById('poker-list');
