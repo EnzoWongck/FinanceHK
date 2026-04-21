@@ -1089,7 +1089,8 @@ function renderAssets(){
   const customCats=getAssetCats();
   const customTotal=customCats.reduce((s,c)=>s+Math.max(0,Number(c.amount)||0),0);
   const total=bankTotal+cash+cryptoTotal+loanLent+customTotal;
-  document.getElementById('assets-total').textContent=fmt(total);
+  const presentTotal=bankTotal+cash+cryptoTotal+customTotal; // 現有資產: excludes loans
+  document.getElementById('assets-total').textContent=fmt(presentTotal);
   const monthKey=(new Date()).toISOString().slice(0,7);
   const mTxns=txns.filter(t=>t.date&&t.date.startsWith(monthKey));
   const mInc=mTxns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
