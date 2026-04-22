@@ -403,6 +403,7 @@ select option{background:var(--bg3)}
     <div id="sync-info" style="font-size:13px;color:#9ea3b3;margin-top:8px;line-height:1.5"></div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
       <button class="btn btn-ghost" onclick="manualSync()">立即同步</button>
+      <button id="force-dl-btn" class="btn btn-ghost" onclick="forceDownload()">⬇️ 強制從雲端下載</button>
       <button class="btn btn-ghost" id="logout-btn" style="display:none" onclick="authLogout()">登出帳號</button>
     </div>
   </div>
@@ -671,19 +672,43 @@ async function pushToSupabase(){
 }
 
 async function pullFromSupabase(){
-  if(!sbUser||!sbClient)return;
+  if(!sbUser||!sbClient){console.log('[Sync] Pull skipped: no user/client');return false;}
+  console.log('[Sync] Pulling from Supabase, user_id:',sbUser.id);
   setSyncStatus('syncing');
   try{
-    const{data,error}=await sbClient.from('finance_data').select('data_key,data_value').eq('user_id',sbUser.id);
-    if(error)throw error;
-    if(data&&data.length){
-      data.forEach(row=>{
-        const lsKey=SYNC_MAP_REV[row.data_key];
-        if(lsKey&&row.data_value!==null)localStorage.setItem(lsKey,JSON.stringify(row.data_value));
-      });
+    const{data,error}=await sbClient
+      .from('finance_data')
+      .select('data_key,data_value')
+      .eq('user_id',sbUser.id);
+    if(error){console.error('[Sync] Pull error:',error);throw error;}
+    console.log('[Sync] Rows fetched:',data?data.length:0);
+    if(!data||!data.length){
+      console.log('[Sync] No rows found for this user in finance_data');
+      setSyncStatus('synced');
+      return true;
     }
+    data.forEach(row=>{
+      const lsKey=SYNC_MAP_REV[row.data_key];
+      if(lsKey){
+        if(row.data_value!==null){
+          console.log('[Sync] Writing',row.data_key,'->',lsKey);
+          localStorage.setItem(lsKey,JSON.stringify(row.data_value));
+        }else{
+          console.log('[Sync] Null value, clearing',row.data_key,'->',lsKey);
+          localStorage.removeItem(lsKey);
+        }
+      }else{
+        console.warn('[Sync] No localStorage mapping for data_key:',row.data_key);
+      }
+    });
+    console.log('[Sync] Pull complete');
     setSyncStatus('synced');
-  }catch(e){console.error('Pull failed',e);setSyncStatus('offline');}
+    return true;
+  }catch(e){
+    console.error('[Sync] Pull failed:',e);
+    setSyncStatus('offline');
+    return false;
+  }
 }
 
 async function manualSync(){
@@ -1716,9 +1741,17 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(sbReady){
     try{
       const{data:{session}}=await sbClient.auth.getSession();
-      if(session){sbUser=session.user;await pullFromSupabase();document.getElementById('auth-overlay').classList.add('hidden');}
+      if(session){
+        sbUser=session.user;
+        console.log('[Sync] Session found, fetching from Supabase before render...');
+        await pullFromSupabase();
+        document.getElementById('auth-overlay').classList.add('hidden');
+      }
       updateSyncInfo();
-    }catch(e){console.error('Auth check failed',e);document.getElementById('auth-overlay').classList.add('hidden');}
+    }catch(e){
+      console.error('[Sync] Auth check failed:',e);
+      document.getElementById('auth-overlay').classList.add('hidden');
+    }
     window.addEventListener('online',()=>{if(sbUser){setSyncStatus('syncing');pushToSupabase();}});
     window.addEventListener('offline',()=>setSyncStatus('offline'));
     if(!navigator.onLine)setSyncStatus('offline');
@@ -1765,6 +1798,31 @@ async function migrateToCloud(){
   }
   btn.disabled=false;
   setTimeout(()=>{btn.textContent=orig;btn.style.background='#cc785c';},3000);
+}
+
+async function forceDownload(){
+  if(!sbUser){alert('請先登入帳號');return;}
+  const btn=document.getElementById('force-dl-btn');
+  const orig=btn?btn.textContent:'';
+  if(btn){btn.textContent='下載中...';btn.disabled=true;}
+  console.log('[Sync] Force download triggered');
+  const ok=await pullFromSupabase();
+  if(ok){
+    initCats();
+    updTxnCats();
+    renderDash();
+    if(document.getElementById('page-txns').classList.contains('active'))renderTxns();
+    if(document.getElementById('page-assets').classList.contains('active'))renderAssets();
+    if(document.getElementById('page-loans').classList.contains('active'))renderLoans();
+    if(document.getElementById('page-poker').classList.contains('active'))renderPoker();
+    if(btn){btn.textContent='✓ 下載成功！';btn.style.background='#57c498';btn.style.color='#fff';}
+  }else{
+    if(btn){btn.textContent='✗ 下載失敗';btn.style.background='#ff7d71';btn.style.color='#fff';}
+  }
+  if(btn){
+    btn.disabled=false;
+    setTimeout(()=>{btn.textContent=orig;btn.style.background='';btn.style.color='';},3000);
+  }
 }
 </script>
 </body>
