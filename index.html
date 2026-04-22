@@ -781,8 +781,8 @@ function updateSyncInfo(){
 }
 
 // Categories
-const DEFAULT_INC=['Poker (Live)','Poker (Online)','生活費','薪水','TFT','股息','利息收入','Other'];
-const DEFAULT_EXP=['Poker Loss (Live)','Poker Loss (Online)','購物','停車場','晚餐','午餐','早餐','娛樂','交通','房租','日用品','GAS','禮物','點心','飲品','保險','數位','Other'];
+const DEFAULT_INC=['Poker (Live)','Poker (Online)','生活費','薪水','利息收入','Other'];
+const DEFAULT_EXP=['Poker Loss (Live)','Poker Loss (Online)','購物','晚餐','午餐','早餐','娛樂','交通','房租','日用品','禮物','飲品','保險','數位','Other'];
 function getIncCats(){const s=ld(K.incCats);return s!==null?s:[...DEFAULT_INC]}
 function getExpCats(){const s=ld(K.expCats);return s!==null?s:[...DEFAULT_EXP]}
 function initCats(){
@@ -801,6 +801,22 @@ function initCats(){
   if(!exp.includes('Poker Loss (Live)')){exp.unshift('Poker Loss (Live)');expChanged=true;}
   if(!exp.includes('Poker Loss (Online)')){exp.splice(exp.indexOf('Poker Loss (Live)')+1,0,'Poker Loss (Online)');expChanged=true;}
   if(expChanged)sv(K.expCats,exp);
+  // Remove deprecated default categories (only if no transactions use them)
+  var txnsForCatCheck=ld(K.txns)||[];
+  var toRemoveExp=['GAS','點心','停車場'];
+  var toRemoveInc=['TFT','股息'];
+  var expNow=getExpCats(),expNowChanged=false;
+  toRemoveExp.forEach(function(cat){
+    var inUse=txnsForCatCheck.some(function(t){return t.type==='expense'&&t.category===cat;});
+    if(!inUse){var idx=expNow.indexOf(cat);if(idx>=0){expNow.splice(idx,1);expNowChanged=true;}}
+  });
+  if(expNowChanged)sv(K.expCats,expNow);
+  var incNow=getIncCats(),incNowChanged=false;
+  toRemoveInc.forEach(function(cat){
+    var inUse=txnsForCatCheck.some(function(t){return t.type==='income'&&t.category===cat;});
+    if(!inUse){var idx=incNow.indexOf(cat);if(idx>=0){incNow.splice(idx,1);incNowChanged=true;}}
+  });
+  if(incNowChanged)sv(K.incCats,incNow);
 }
 function displayCat(type,cat){const list=type==='income'?getIncCats():getExpCats();return list.includes(cat)?cat:null}
 
@@ -1694,8 +1710,12 @@ function saveRecurring(){
   if(id){const i=recs.findIndex(r=>r.id===id);if(i>=0)recs[i]={...recs[i],name,amount,category,frequency,type:recType,assetType,assetId,lastApplied:null};}
   else recs.push({id:uid(),name,amount,category,frequency,type:recType,assetType,assetId,lastApplied:null});
   sv(K.recurring,recs);
+  // Immediately generate current-month transaction for newly added recurring
+  if(!id)applyRecurring();
   closeModal('modal-recurring');
   if(document.getElementById('page-settings').classList.contains('active'))renderSettings();
+  if(document.getElementById('page-txns').classList.contains('active'))renderTxns();
+  renderDash();
 }
 function deleteRecurring(id){
   if(!confirm('確定刪除固定交易？'))return;
@@ -1714,7 +1734,7 @@ function applyRecurring(){
     if(already)return;
     const monthlyAmt=r.frequency==='yearly'?Math.round(r.amount/12*100)/100:r.amount;
     const date=thisMonth+'-01';
-    txns.push({id:uid(),date,amount:monthlyAmt,category:r.category,note:r.name,type:r.type,assetType:r.assetType,assetId:r.assetId,recurringId:r.id});
+    txns.push({id:uid(),date,amount:monthlyAmt,category:r.category,note:'🔄 '+r.name,type:r.type,assetType:r.assetType,assetId:r.assetId,recurringId:r.id});
     adjustAsset(r.assetType,r.assetId,r.type==='income'?monthlyAmt:-monthlyAmt);
     changed=true;
   });
