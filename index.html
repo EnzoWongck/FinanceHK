@@ -661,10 +661,11 @@ async function pushToSupabase(){
   if(!sbUser||!sbClient)return;
   if(!navigator.onLine){setSyncStatus('offline');return;}
   try{
-    const rows=Object.entries(SYNC_MAP).map(([lsKey,sbKey])=>{
-      const v=localStorage.getItem(lsKey);
-      return{user_id:sbUser.id,data_key:sbKey,data_value:v!==null?JSON.parse(v):null,updated_at:new Date().toISOString()};
-    });
+    const rows=Object.entries(SYNC_MAP)
+      .filter(([lsKey])=>localStorage.getItem(lsKey)!==null)
+      .map(([lsKey,sbKey])=>({user_id:sbUser.id,data_key:sbKey,data_value:JSON.parse(localStorage.getItem(lsKey)),updated_at:new Date().toISOString()}));
+    if(!rows.length){console.log('[Sync] Nothing to push (localStorage empty)');setSyncStatus('synced');return;}
+    console.log('[Sync] Pushing',rows.length,'keys:',rows.map(r=>r.data_key).join(', '));
     const{error}=await sbClient.from('finance_data').upsert(rows,{onConflict:'user_id,data_key'});
     if(error)throw error;
     setSyncStatus('synced');
@@ -694,8 +695,7 @@ async function pullFromSupabase(){
           console.log('[Sync] Writing',row.data_key,'->',lsKey);
           localStorage.setItem(lsKey,JSON.stringify(row.data_value));
         }else{
-          console.log('[Sync] Null value, clearing',row.data_key,'->',lsKey);
-          localStorage.removeItem(lsKey);
+          console.log('[Sync] Null in Supabase for',row.data_key,'— keeping existing local value');
         }
       }else{
         console.warn('[Sync] No localStorage mapping for data_key:',row.data_key);
@@ -1785,10 +1785,11 @@ async function migrateToCloud(){
   const orig=btn.textContent;
   btn.textContent='上傳中...';btn.disabled=true;
   try{
-    const rows=Object.entries(SYNC_MAP).map(([lsKey,sbKey])=>{
-      const v=localStorage.getItem(lsKey);
-      return{user_id:sbUser.id,data_key:sbKey,data_value:v!==null?JSON.parse(v):null,updated_at:new Date().toISOString()};
-    });
+    const rows=Object.entries(SYNC_MAP)
+      .filter(([lsKey])=>localStorage.getItem(lsKey)!==null)
+      .map(([lsKey,sbKey])=>({user_id:sbUser.id,data_key:sbKey,data_value:JSON.parse(localStorage.getItem(lsKey)),updated_at:new Date().toISOString()}));
+    console.log('[Migrate] Uploading',rows.length,'non-null keys:',rows.map(r=>r.data_key).join(', '));
+    if(!rows.length){btn.textContent='本機無數據可上傳';btn.disabled=false;setTimeout(()=>{btn.textContent=orig;btn.style.background='#cc785c';},3000);return;}
     const{error}=await sbClient.from('finance_data').upsert(rows,{onConflict:'user_id,data_key'});
     if(error)throw error;
     btn.textContent='✓ 上傳成功！';btn.style.background='#57c498';
