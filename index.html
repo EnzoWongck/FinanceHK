@@ -179,12 +179,11 @@ select option{background:var(--bg3)}
 }
 
 /* Sync status badge */
-#sync-status{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:12px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;transition:opacity 0.5s;pointer-events:none}
-#sync-status.hidden{opacity:0}
+#sync-status{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;transition:opacity 0.6s;pointer-events:none;opacity:1}
+#sync-status.hide{opacity:0}
 #sync-status.synced{background:rgba(87,196,152,0.15);color:#57c498}
-#sync-status.syncing{background:rgba(100,181,246,0.15);color:#64b5f6}
-#sync-status.offline{background:rgba(158,163,179,0.15);color:#9ea3b3}
-#sync-status.error{background:rgba(255,125,113,0.15);color:#ff7d71}
+#sync-status.syncing{background:rgba(158,163,179,0.12);color:#9ea3b3}
+#sync-status.offline{background:rgba(255,125,113,0.12);color:#ff7d71}
 /* Auth overlay */
 #auth-overlay{position:fixed;inset:0;background:#12141b;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;overflow-y:auto}
 #auth-overlay.hidden{display:none}
@@ -196,7 +195,12 @@ select option{background:var(--bg3)}
 .auth-input:focus{border-color:#ff8a72}
 .auth-btn{width:100%;background:#ff8a72;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;padding:13px;cursor:pointer;margin-bottom:10px;box-sizing:border-box}
 .auth-btn:active{background:#ea6f56}
-.auth-offline-btn{width:100%;background:transparent;border:1px solid #2b3040;color:#9ea3b3;border-radius:10px;font-size:13px;padding:10px;cursor:pointer;box-sizing:border-box}
+.auth-btn-outline{background:transparent;border:1px solid #ff8a72;color:#ff8a72}
+.auth-btn-outline:active{background:rgba(255,138,114,0.1)}
+.auth-divider{text-align:center;color:#2b3040;font-size:12px;margin:4px 0 14px;position:relative}
+.auth-divider::before,.auth-divider::after{content:'';position:absolute;top:50%;width:40%;height:1px;background:#2b3040}
+.auth-divider::before{left:0}.auth-divider::after{right:0}
+.auth-offline-btn{width:100%;background:transparent;border:none;color:#9ea3b3;font-size:12px;padding:8px;cursor:pointer;box-sizing:border-box;margin-top:4px}
 .auth-err{color:#ff7d71;font-size:12px;text-align:center;margin-bottom:8px;min-height:16px}
 </style>
 </head>
@@ -213,7 +217,9 @@ select option{background:var(--bg3)}
     <input id="auth-email" class="auth-input" type="email" placeholder="電郵地址" autocomplete="email" inputmode="email">
     <input id="auth-password" class="auth-input" type="password" placeholder="密碼（至少6位）" autocomplete="current-password">
     <div id="auth-err" class="auth-err"></div>
-    <button class="auth-btn" onclick="authLogin()">登入 / 註冊</button>
+    <button class="auth-btn" onclick="authSignIn()">登入</button>
+    <div class="auth-divider">或</div>
+    <button class="auth-btn auth-btn-outline" onclick="authSignUp()">註冊新帳號</button>
     <button class="auth-offline-btn" onclick="skipAuth()">離線使用（不同步）</button>
   </div>
 </div>
@@ -605,26 +611,41 @@ const K={cash:'pf_cash',banks:'pf_banks',txns:'pf_txns',poker:'pf_poker',loans:'
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v));scheduleSupabaseSync()}
 function ld(k){try{const v=localStorage.getItem(k);return v===null?null:JSON.parse(v)}catch(e){return null}}
 
-// ── Supabase sync ──────────────────────────────────────────────────────────────────────────────────
-const SB_URL='YOUR_SUPABASE_URL';
-const SB_KEY='YOUR_SUPABASE_ANON_KEY';
+// ── Supabase ─────────────────────────────────────────────────────────────────────────────────────
+const SB_URL='https://syebxvqptqmwmmkrpawj.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5ZWJ4dnFwdHFtd21ta3JwYXdqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NDE5MzUsImV4cCI6MjA5MjQxNzkzNX0.44fTejfJf1umdrsHjvddoHWc8OohpIGjr9kvJ943qdg';
 let sbClient=null,sbUser=null,_syncTimer=null;
 
+// localStorage key → Supabase data_key
+const SYNC_MAP={
+  'pf_txns':'transactions',
+  'pf_poker':'poker_sessions',
+  'pf_loans':'loans',
+  'pf_cash':'assets',
+  'pf_banks':'bank_accounts',
+  'pf_crypto':'investments',
+  'pf_inc_cats':'categories_income',
+  'pf_exp_cats':'categories_expense',
+  'pf_recurring':'fixed_transactions',
+  'pf_asset_cats':'settings',
+  'pf_cards':'credit_cards'
+};
+const SYNC_MAP_REV={};
+Object.entries(SYNC_MAP).forEach(([ls,sb])=>SYNC_MAP_REV[sb]=ls);
+
 function initSupabase(){
-  if(SB_URL==='YOUR_SUPABASE_URL')return false;
   try{sbClient=window.supabase.createClient(SB_URL,SB_KEY);return true;}
   catch(e){console.error('Supabase init failed',e);return false;}
 }
 
-function setSyncStatus(state,msg){
+function setSyncStatus(state){
   const el=document.getElementById('sync-status');
   if(!el)return;
-  const labels={synced:'已同步 ✓',syncing:'同步中...',offline:'離線',error:'同步錯誤'};
-  el.textContent=msg||labels[state]||state;
+  const labels={synced:'✓ 已同步',syncing:'⟳ 同步中',offline:'✗ 離線'};
+  el.textContent=labels[state]||state;
   el.className=state;
-  if(state==='synced'||state==='offline'){
-    setTimeout(()=>{if(el.className===state)el.classList.add('hidden');},3000);
-  }
+  el.style.opacity='1';
+  if(state==='synced'){setTimeout(()=>{el.classList.add('hide');},3000);}
 }
 
 function scheduleSupabaseSync(){
@@ -638,28 +659,30 @@ async function pushToSupabase(){
   if(!sbUser||!sbClient)return;
   if(!navigator.onLine){setSyncStatus('offline');return;}
   try{
-    const data={};
-    Object.values(K).forEach(k=>{const v=localStorage.getItem(k);if(v!==null)data[k]=JSON.parse(v);});
-    const{error}=await sbClient.from('user_data').upsert(
-      {user_id:sbUser.id,data:data,updated_at:new Date().toISOString()},
-      {onConflict:'user_id'}
-    );
+    const rows=Object.entries(SYNC_MAP).map(([lsKey,sbKey])=>{
+      const v=localStorage.getItem(lsKey);
+      return{user_id:sbUser.id,data_key:sbKey,data_value:v!==null?JSON.parse(v):null,updated_at:new Date().toISOString()};
+    });
+    const{error}=await sbClient.from('finance_data').upsert(rows,{onConflict:'user_id,data_key'});
     if(error)throw error;
     setSyncStatus('synced');
-  }catch(e){console.error('Push failed',e);setSyncStatus('error');}
+  }catch(e){console.error('Push failed',e);setSyncStatus('offline');}
 }
 
 async function pullFromSupabase(){
   if(!sbUser||!sbClient)return;
   setSyncStatus('syncing');
   try{
-    const{data,error}=await sbClient.from('user_data').select('data').eq('user_id',sbUser.id).single();
-    if(error&&error.code!=='PGRST116')throw error;
-    if(data&&data.data){
-      Object.entries(data.data).forEach(([k,v])=>{localStorage.setItem(k,JSON.stringify(v));});
+    const{data,error}=await sbClient.from('finance_data').select('data_key,data_value').eq('user_id',sbUser.id);
+    if(error)throw error;
+    if(data&&data.length){
+      data.forEach(row=>{
+        const lsKey=SYNC_MAP_REV[row.data_key];
+        if(lsKey&&row.data_value!==null)localStorage.setItem(lsKey,JSON.stringify(row.data_value));
+      });
     }
     setSyncStatus('synced');
-  }catch(e){console.error('Pull failed',e);setSyncStatus('error');}
+  }catch(e){console.error('Pull failed',e);setSyncStatus('offline');}
 }
 
 async function manualSync(){
@@ -667,29 +690,44 @@ async function manualSync(){
   await pushToSupabase();
 }
 
-async function authLogin(){
-  if(!sbClient){alert('Supabase 尚未設定，請先填入 URL 和 Key');return;}
+async function authSignIn(){
   const email=document.getElementById('auth-email').value.trim();
   const pwd=document.getElementById('auth-password').value;
   const errEl=document.getElementById('auth-err');
   if(!email||!pwd){errEl.textContent='請輸入電郵和密碼';return;}
   errEl.textContent='登入中...';
   try{
-    let{data,error}=await sbClient.auth.signInWithPassword({email,password:pwd});
-    if(error&&(error.message.includes('Invalid login')||error.message.includes('invalid_credentials'))){
-      const res=await sbClient.auth.signUp({email,password:pwd});
-      data=res.data;error=res.error;
-      if(!error&&!data.session)errEl.textContent='帳號已建立，請查收確認電郵後再登入';
-    }
+    const{data,error}=await sbClient.auth.signInWithPassword({email,password:pwd});
     if(error)throw error;
     sbUser=data.user||(data.session&&data.session.user);
     if(sbUser){
       await pullFromSupabase();
       document.getElementById('auth-overlay').classList.add('hidden');
-      updateSyncInfo();
-      initCats();renderDash();
+      updateSyncInfo();initCats();renderDash();
     }
-  }catch(e){errEl.textContent=e.message||'登入失敗，請重試';}
+  }catch(e){errEl.textContent=e.message||'登入失敗，請確認帳號密碼';}
+}
+
+async function authSignUp(){
+  const email=document.getElementById('auth-email').value.trim();
+  const pwd=document.getElementById('auth-password').value;
+  const errEl=document.getElementById('auth-err');
+  if(!email||!pwd){errEl.textContent='請輸入電郵和密碼';return;}
+  if(pwd.length<6){errEl.textContent='密碼至少需要6個字元';return;}
+  errEl.textContent='註冊中...';
+  try{
+    const{data,error}=await sbClient.auth.signUp({email,password:pwd});
+    if(error)throw error;
+    if(data.session){
+      sbUser=data.user||(data.session&&data.session.user);
+      await pullFromSupabase();
+      document.getElementById('auth-overlay').classList.add('hidden');
+      updateSyncInfo();initCats();renderDash();
+    }else{
+      errEl.style.color='#57c498';
+      errEl.textContent='確認電郵已發送，請查收後點擊連結再登入';
+    }
+  }catch(e){errEl.textContent=e.message||'註冊失敗，請重試';}
 }
 
 function skipAuth(){
@@ -699,7 +737,7 @@ function skipAuth(){
 
 async function authLogout(){
   if(!confirm('確定登出？'))return;
-  if(sbClient)await sbClient.auth.signOut();
+  await sbClient.auth.signOut();
   sbUser=null;
   updateSyncInfo();
   document.getElementById('auth-overlay').classList.remove('hidden');
@@ -709,11 +747,6 @@ function updateSyncInfo(){
   const infoEl=document.getElementById('sync-info');
   const logoutBtn=document.getElementById('logout-btn');
   if(!infoEl)return;
-  if(!sbClient){
-    infoEl.innerHTML='<span style="color:#ff8a72">Supabase 未設定</span><br>請填入 URL 和 Key 後重新整理';
-    if(logoutBtn)logoutBtn.style.display='none';
-    return;
-  }
   if(sbUser){
     infoEl.textContent='已登入：'+sbUser.email;
     if(logoutBtn)logoutBtn.style.display='block';
@@ -722,7 +755,6 @@ function updateSyncInfo(){
     if(logoutBtn)logoutBtn.style.display='none';
   }
 }
-
 
 // Categories
 const DEFAULT_INC=['Poker (Live)','Poker (Online)','生活費','薪水','TFT','股息','利息收入','Other'];
@@ -1510,7 +1542,7 @@ function clearAllData(){
   if(!confirm('確定清除所有數據？此操作不可復原！'))return;
   if(!confirm('再次確認：所有數據將被永久刪除！'))return;
   Object.values(K).forEach(k=>localStorage.removeItem(k));
-  if(sbUser&&sbClient)sbClient.from('user_data').delete().eq('user_id',sbUser.id).then(()=>location.reload()).catch(()=>location.reload());
+  if(sbUser&&sbClient)sbClient.from('finance_data').delete().eq('user_id',sbUser.id).then(()=>location.reload()).catch(()=>location.reload());
   else location.reload();
 }
 
@@ -1692,9 +1724,6 @@ document.addEventListener('DOMContentLoaded',async()=>{
     window.addEventListener('online',()=>{if(sbUser){setSyncStatus('syncing');pushToSupabase();}});
     window.addEventListener('offline',()=>setSyncStatus('offline'));
     if(!navigator.onLine)setSyncStatus('offline');
-  }else{
-    document.getElementById('auth-overlay').classList.add('hidden');
-    updateSyncInfo();
   }
   updTxnCats();
   const n=new Date();
