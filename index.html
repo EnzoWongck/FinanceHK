@@ -703,8 +703,7 @@ async function authSignIn(){
     sbUser=data.user||(data.session&&data.session.user);
     if(sbUser){
       await pullFromSupabase();
-      document.getElementById('auth-overlay').classList.add('hidden');
-      updateSyncInfo();initCats();renderDash();
+      location.reload();
     }
   }catch(e){errEl.textContent=e.message||'登入失敗，請確認帳號密碼';}
 }
@@ -722,8 +721,7 @@ async function authSignUp(){
     if(data.session){
       sbUser=data.user||(data.session&&data.session.user);
       await pullFromSupabase();
-      document.getElementById('auth-overlay').classList.add('hidden');
-      updateSyncInfo();initCats();renderDash();
+      location.reload();
     }else{
       errEl.style.color='#57c498';
       errEl.textContent='確認電郵已發送，請查收後點擊連結再登入';
@@ -1714,7 +1712,6 @@ function setupPWA(){
 // Wire up modal open buttons
 document.addEventListener('DOMContentLoaded',async()=>{
   setupPWA();
-  initCats();
   const sbReady=initSupabase();
   if(sbReady){
     try{
@@ -1726,6 +1723,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
     window.addEventListener('offline',()=>setSyncStatus('offline'));
     if(!navigator.onLine)setSyncStatus('offline');
   }
+  initCats();
   updTxnCats();
   const n=new Date();
   dashMonth=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`;
