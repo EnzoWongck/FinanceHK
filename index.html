@@ -1777,8 +1777,9 @@ function renderCardColorSwatches(selected){
   const cont=document.getElementById('card-color-swatches');
   if(!cont)return;
   cont.innerHTML=CC_COLORS.map(function(c){
+    var _sq=String.fromCharCode(39);
     return '<div class="color-swatch'+(c===selected?' selected':'')
-      +'" style="background:'+c+'" onclick="selectCardColor(''+c+'')"></div>';
+      +'" style="background:'+c+'" onclick="selectCardColor('+_sq+c+_sq+')"></div>';
   }).join('');
   document.getElementById('card-color').value=selected||CC_COLORS[0];
 }
