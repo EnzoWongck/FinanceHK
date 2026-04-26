@@ -1563,7 +1563,7 @@ function renderLoans(){
       <div class="row-header">
         <div>
           <div class="row-title">${l.person} <span class="badge ${l.ltype==='lent'?'badge-income':'badge-expense'}">${l.ltype==='lent'?'借出':'借入'}</span></div>
-          <div class="row-sub">${l.date}${l.rate?' · 月息${l.rate}%':''}${l.note?' · '+l.note:''}${l.settled?' · 已結清':''}</div>
+          <div class="row-sub">${l.date}${l.rate?(' · 月息'+l.rate+'%'):''}${l.note?' · '+l.note:''}${l.settled?' · 已結清':''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <div style="text-align:right">
