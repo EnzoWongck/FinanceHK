@@ -233,6 +233,11 @@ select option{background:var(--bg3)}
 /* Prominent amount input */
 #txn-amount{border:2px solid var(--primary)!important;font-size:20px!important;font-weight:700!important;text-align:center;letter-spacing:.5px}
 #txn-amount:focus{box-shadow:0 0 0 4px rgba(255,138,114,.22),0 0 12px rgba(255,138,114,.18)!important}
+/* CC list item */
+.cc-list-item{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;position:relative;-webkit-tap-highlight-color:transparent;transition:background .12s}
+.cc-list-item:active{background:var(--bg3)}
+/* CC asset row */
+.cc-asset-row{display:flex;align-items:center;background:var(--bg2);border-radius:12px;padding:12px 14px;margin-bottom:8px;gap:8px}
 /* CC settings list */
 .cc-settings-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
 .cc-settings-item:last-child{border-bottom:none}
@@ -290,15 +295,10 @@ select option{background:var(--bg3)}
       <div class="stat-label"><span class="stat-dot" style="background:#5ab79f"></span>現金</div>
       <div class="stat-value" id="dash-cash">$0</div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card" onclick="openCCListPage()" style="cursor:pointer;-webkit-tap-highlight-color:transparent">
       <div class="stat-label"><span class="stat-dot" style="background:#b56e6f"></span>信用卡</div>
       <div class="stat-value amount-neg" id="dash-cards">$0</div>
     </div>
-  </div>
-  <div id="cc-banners" class="cc-banners"></div>
-  <div id="cc-tiles-section" style="display:none">
-    <h3 style="margin:2px 4px 8px;color:var(--text2);font-size:13px">信用卡</h3>
-    <div id="cc-tiles" class="cc-tiles"></div>
   </div>
   <div class="card">
     <h3>資產分佈</h3>
@@ -352,21 +352,13 @@ select option{background:var(--bg3)}
   <div id="breakdown-list" style="margin-top:4px"></div>
 </div>
 
-<div id="page-cc-detail" class="page">
+<div id="page-cc-list" class="page">
   <div class="bd-header">
-    <button class="back-btn" onclick="closeCCDetail()">‹</button>
-    <h2 id="cc-detail-title" style="margin:0;font-size:17px">信用卡</h2>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-sm btn-ghost" id="cc-detail-edit-btn" onclick="editCurrentCard()">編輯</button>
-    </div>
+    <button class="back-btn" onclick="closeCCList()">‹</button>
+    <h2 style="margin:0;font-size:17px">信用卡</h2>
   </div>
-  <div id="cc-detail-header" class="cc-detail-header"></div>
-  <button class="btn" style="width:100%;margin-bottom:14px" onclick="openCCRepayModal()">💳 還款</button>
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <h3 style="margin:0;color:var(--text2);font-size:13px">交易記錄</h3>
-    <button class="btn btn-sm btn-ghost" id="cc-show-paid-btn" onclick="toggleCCPaid()">顯示已還款</button>
-  </div>
-  <div id="cc-detail-txns"></div>
+  <div id="cc-list-cards"></div>
+  <button class="fab" onclick="openCardModal()">+</button>
 </div>
 
 <div id="page-txns" class="page">
@@ -432,6 +424,10 @@ select option{background:var(--bg3)}
   </div>
   <h3 style="margin:2px 4px 8px">分類 - BY CATEGORY</h3>
   <div id="assets-category-list" class="asset-cat-list"></div>
+  <div id="assets-cc-section" style="display:none;margin-top:4px">
+    <h3 style="margin:14px 4px 8px;color:var(--text2);font-size:13px">信用卡</h3>
+    <div id="assets-cc-list"></div>
+  </div>
   <button class="fab" onclick="addAssetCategory()">+</button>
 </div>
 
@@ -619,13 +615,17 @@ select option{background:var(--bg3)}
   <div class="modal">
     <div class="modal-title" id="modal-card-title">新增信用卡</div>
     <input type="hidden" id="card-edit-id">
-    <div class="form-group"><label>信用卡名稱</label><input id="card-name" placeholder="例：HSBC-9791"></div>
+    <div class="form-group">
+      <label>信用卡名稱</label>
+      <input id="card-name" placeholder="例：HSBC-9791" oninput="updateCardNamePreview()">
+      <div id="card-name-preview" style="margin-top:6px;font-size:15px;font-weight:700;min-height:22px;transition:color .12s;color:#cc785c">預覽</div>
+    </div>
     <div class="form-group"><label>銀行</label><input id="card-bank" placeholder="例：HSBC"></div>
     <div class="form-row">
-      <div class="form-group"><label>出帳日 (1-31)</label><input id="card-statement-day" type="number" min="1" max="31" placeholder="例：15"></div>
-      <div class="form-group"><label>還款日 (1-31)</label><input id="card-due-day" type="number" min="1" max="31" placeholder="例：3"></div>
+      <div class="form-group"><label>下次還款日</label><input id="card-next-due-date" type="date"></div>
+      <div class="form-group"><label>還款金額 (HKD)</label><input id="card-next-repay-amount" type="number" placeholder="0" step="0.01" inputmode="decimal"></div>
     </div>
-    <div class="form-group"><label>目前欠債 (HKD)</label><input id="card-balance" type="number" placeholder="0" step="0.01"></div>
+    <div class="form-group"><label>已使用額度 (HKD)</label><input id="card-balance" type="number" placeholder="0" step="0.01" inputmode="decimal"></div>
     <div class="form-group"><label>顏色</label>
       <div class="color-swatches" id="card-color-swatches"></div>
       <input type="hidden" id="card-color" value="#cc785c">
@@ -931,18 +931,18 @@ function getRecurring(){return ld(K.recurring)||[]}
 function getAssetCats(){return ld(K.assetCats)||[]}
 
 // Utils
-function getDueDateStatus(dueDay){
-  const today=new Date();
-  const todayDay=today.getDate();
-  let daysLeft;
-  if(dueDay>=todayDay){
-    daysLeft=dueDay-todayDay;
-  } else {
-    const nextDue=new Date(today.getFullYear(),today.getMonth()+1,dueDay);
-    daysLeft=Math.round((nextDue-today)/86400000);
-  }
+function getDueDateStatus(nextDueDate){
+  if(!nextDueDate)return null;
+  const today=new Date();today.setHours(0,0,0,0);
+  const due=new Date(nextDueDate+'T00:00:00');
+  const daysLeft=Math.max(0,Math.round((due-today)/86400000));
   const color=daysLeft<=3?'red':daysLeft<=7?'orange':'green';
   return{color,daysLeft};
+}
+function fmtDueDate(iso){
+  if(!iso)return'';
+  const d=new Date(iso+'T00:00:00');
+  return(d.getMonth()+1)+'月'+d.getDate()+'日';
 }
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
 function fmt(n){return '$'+Math.abs(n).toLocaleString('en-HK',{minimumFractionDigits:0,maximumFractionDigits:0})}
@@ -991,31 +991,6 @@ function renderDash(){
   document.getElementById('dash-cash').textContent=fmt(cash);
   document.getElementById('dash-crypto').textContent=fmt(cryptoTotal);
   document.getElementById('dash-cards').textContent=fmt(cardTotal);
-  // CC tiles + banners
-  const ccBannersEl=document.getElementById('cc-banners');
-  const ccTilesEl=document.getElementById('cc-tiles');
-  const ccTilesSection=document.getElementById('cc-tiles-section');
-  if(cards.length){
-    ccTilesSection.style.display='block';
-    let bannersHtml='';
-    let tilesHtml='';
-    cards.forEach(function(c){
-      const debt=getCardDebt(c);
-      if(!c.dueDay){tilesHtml+=buildCCTile(c);return;}
-      const st=getDueDateStatus(c.dueDay);
-      if(st.color==='red'&&debt>0){
-        bannersHtml+='<div class="cc-banner">⚠️ <span><strong>'+c.name+'</strong> 還款日剩 <strong>'+st.daysLeft+'</strong> 天，欠款 <strong>'+fmt(debt)+'</strong></span></div>';
-      } else if(st.color==='orange'&&debt>0){
-        bannersHtml+='<div class="cc-banner orange">⚠️ <span><strong>'+c.name+'</strong> 還款日剩 <strong>'+st.daysLeft+'</strong> 天，欠款 <strong>'+fmt(debt)+'</strong></span></div>';
-      }
-      tilesHtml+=buildCCTile(c);
-    });
-    ccBannersEl.innerHTML=bannersHtml;
-    ccTilesEl.innerHTML=tilesHtml;
-  } else {
-    ccTilesSection.style.display='none';
-    ccBannersEl.innerHTML='';
-  }
   // 30-day net worth trend (reverse-replay by transactions)
   const trendDays=30;
   const MS_DAY=86400000;
@@ -1079,28 +1054,6 @@ function renderDash(){
   chartMonthly=new Chart(mCtx,{type:'doughnut',data:{labels:['支出','收入'],datasets:[{data:mSum>0?[mExp,mInc]:[1],backgroundColor:mSum>0?['#ff8a72','#57c498']:['#444'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{display:false}}}});
 }
 
-function buildCCTile(c){
-  const debt=getCardDebt(c);
-  const color=c.color||'#cc785c';
-  const sq=String.fromCharCode(39);
-  let dueHtml='';
-  if(c.dueDay){
-    const st=getDueDateStatus(c.dueDay);
-    const today=new Date();
-    const dueDateStr=(st.daysLeft===0?'今天到期':st.daysLeft+'天後到期 ('+new Date(today.getFullYear(),today.getMonth()+(new Date().getDate()>c.dueDay?1:0),c.dueDay).toLocaleDateString('zh-HK',{month:'numeric',day:'numeric'})+')');
-    dueHtml='<div class="cc-tile-due"><span class="status-dot '+st.color+'"></span>'+dueDateStr+'</div>';
-  }
-  return '<div class="cc-tile" onclick="openCCDetailPage('+sq+c.id+sq+')">'
-    +'<div class="cc-tile-accent" style="background:'+color+'"></div>'
-    +'<div style="padding-left:8px">'
-    +'<div class="cc-tile-header">'
-    +'<div><div class="cc-tile-name">'+c.name+'</div>'+(c.bank?'<div class="cc-tile-bank">'+c.bank+'</div>':'')+'</div>'
-    +'</div>'
-    +'<div class="cc-tile-debt">'+fmt(debt)+'</div>'
-    +dueHtml
-    +'</div></div>';
-}
-
 // Banks
 function renderBanks(){
   const banks=getBanks();
@@ -1146,71 +1099,61 @@ function deleteBank(id){if(confirm('確定刪除？')){sv(K.banks,getBanks().fil
 // override + button
 document.querySelector('[onclick="openModal(\'modal-bank\')"]') && (function(){})();
 
-// CC Detail page
+// CC List page
 let currentCCCardId=null;
-let ccShowPaid=false;
-function openCCDetailPage(cardId){
-  currentCCCardId=cardId;
-  ccShowPaid=false;
+function openCCListPage(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-cc-detail').classList.add('active');
-  renderCCDetail();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-cc-list').classList.add('active');
+  renderCCList();
 }
-function closeCCDetail(){
+function closeCCList(){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-dash').classList.add('active');
   document.querySelector('.nav-item').classList.add('active');
   renderDash();
 }
-function editCurrentCard(){
-  const c=getCards().find(x=>x.id===currentCCCardId);
-  if(c)editCard(c.id);
-}
-function toggleCCPaid(){
-  ccShowPaid=!ccShowPaid;
-  document.getElementById('cc-show-paid-btn').textContent=ccShowPaid?'隱藏已還款':'顯示已還款';
-  renderCCDetail();
-}
-function renderCCDetail(){
-  const c=getCards().find(x=>x.id===currentCCCardId);
-  if(!c)return;
-  const debt=getCardDebt(c);
-  const color=c.color||'#cc785c';
-  document.getElementById('cc-detail-title').textContent=c.name;
-  document.getElementById('cc-repay-title').textContent='還款 '+c.name;
-  // Header
-  let statusHtml='';
-  if(c.dueDay){
-    const st=getDueDateStatus(c.dueDay);
-    statusHtml='<span class="status-dot '+st.color+'" style="width:10px;height:10px"></span> 還款日: 每月 '+c.dueDay+' 日 ('+st.daysLeft+' 天後)';
-  }
-  document.getElementById('cc-detail-header').innerHTML=
-    '<div class="cc-detail-card-name" style="color:'+color+'">'+c.name+'</div>'
-    +'<div class="cc-detail-debt">'+fmt(debt)+'</div>'
-    +'<div style="font-size:12px;color:var(--text2)">'+(statusHtml)+'</div>'
-    +'<div class="cc-detail-meta">'
-    +(c.bank?'<div class="cc-detail-meta-item">銀行<br><span class="cc-detail-meta-val">'+c.bank+'</span></div>':'')
-    +(c.statementDay?'<div class="cc-detail-meta-item">出帳日<br><span class="cc-detail-meta-val">每月'+c.statementDay+'日</span></div>':'')
-    +(c.dueDay?'<div class="cc-detail-meta-item">還款日<br><span class="cc-detail-meta-val">每月'+c.dueDay+'日</span></div>':'')
-    +'</div>';
-  // Transactions
-  const allTxns=getCCTxns().filter(t=>t.cardId===currentCCCardId);
-  const displayTxns=ccShowPaid?allTxns:allTxns.filter(t=>!t.repaid);
-  const trashSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>';
-  const sq=String.fromCharCode(39);
-  if(!displayTxns.length){
-    document.getElementById('cc-detail-txns').innerHTML='<div class="empty">暫無交易記錄</div>';
+function renderCCList(){
+  const cards=getCards();
+  const el=document.getElementById('cc-list-cards');
+  if(!el)return;
+  if(!cards.length){
+    el.innerHTML='<div class="empty" style="padding:48px 0">尚無信用卡<br>點擊 + 新增第一張</div>';
     return;
   }
-  const sorted=[...displayTxns].sort((a,b)=>b.date.localeCompare(a.date));
-  document.getElementById('cc-detail-txns').innerHTML=sorted.map(function(t){
-    return '<div class="cc-txn-item'+(t.repaid?' repaid':'')+'"><div>'
-      +'<div class="row-title">'+t.category+(t.notes?' · '+t.notes:'')+'</div>'
-      +'<div class="cc-txn-date">'+t.date+(t.repaid?' · 已還款':'')+'</div>'
-      +'</div><div style="display:flex;align-items:center;gap:8px">'
-      +'<span class="row-amount amount-neg">-'+fmt(t.amount)+'</span>'
-      +(!t.repaid?'<button class="btn-icon-del" onclick="deleteCCTxn('+sq+t.id+sq+')">'+trashSVG+'</button>':'')
-      +'</div></div>';
+  const sq=String.fromCharCode(39);
+  el.innerHTML=cards.map(function(c){
+    const debt=getCardDebt(c);
+    const color=c.color||'#cc785c';
+    const isPaid=debt===0;
+    const badge=isPaid
+      ?'<span class="badge badge-income" style="font-size:11px">已還款</span>'
+      :'<span class="badge badge-expense" style="font-size:11px">未還款</span>';
+    let dotHtml='';
+    if(!isPaid&&c.nextDueDate){
+      const st=getDueDateStatus(c.nextDueDate);
+      if(st)dotHtml='<span class="status-dot '+st.color+'" style="position:absolute;top:14px;right:14px;width:9px;height:9px"></span>';
+    }
+    let rightHtml='';
+    if(c.nextDueDate){
+      rightHtml+='<div style="font-size:11px;color:var(--text2);text-align:right;white-space:nowrap">下次還款日</div>'
+        +'<div style="font-size:13px;font-weight:600;text-align:right">'+fmtDueDate(c.nextDueDate)+'</div>';
+    }
+    if(c.nextRepayAmount){
+      rightHtml+='<div style="font-size:11px;color:var(--text2);text-align:right;margin-top:4px;white-space:nowrap">還款金額</div>'
+        +'<div style="font-size:13px;font-weight:700;text-align:right;color:var(--danger)">'+fmt(c.nextRepayAmount)+'</div>';
+    }
+    return '<div class="cc-list-item" onclick="editCard('+sq+c.id+sq+')">'
+      +dotHtml
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">'
+      +'<span style="font-size:16px;font-weight:700;color:'+color+'">'+c.name+'</span>'
+      +badge+'</div>'
+      +(c.bank?'<div style="font-size:12px;color:var(--text2)">'+c.bank+'</div>':'')
+      +'<div style="font-size:13px;color:var(--danger);font-weight:600;margin-top:4px">'+fmt(debt)+'</div>'
+      +'</div>'
+      +(rightHtml?'<div style="margin-left:12px;flex-shrink:0">'+rightHtml+'</div>':'')
+      +'</div>';
   }).join('');
 }
 function deleteCCTxn(id){
@@ -1224,9 +1167,10 @@ function deleteCCTxn(id){
   // Remove from txns
   sv(K.txns,getTxns().filter(x=>x.ccTxnId!==id));
   sv(K.ccTxns,getCCTxns().filter(x=>x.id!==id));
-  renderCCDetail();
+  if(document.getElementById('page-cc-list')&&document.getElementById('page-cc-list').classList.contains('active'))renderCCList();
 }
-function openCCRepayModal(){
+function openCCRepayModal(cardId){
+  if(cardId)currentCCCardId=cardId;
   if(!currentCCCardId)return;
   const c=getCards().find(x=>x.id===currentCCCardId);
   if(!c)return;
@@ -1275,7 +1219,7 @@ function saveCCRepay(){
   txns.push({id:uid(),date,amount,category:'信用卡還款',note:'還款 '+cards[ci].name,type:'repayment',assetType,assetId,cardId});
   sv(K.txns,txns);
   closeModal('modal-cc-repay');
-  renderCCDetail();
+  if(document.getElementById('page-cc-list')&&document.getElementById('page-cc-list').classList.contains('active'))renderCCList();
   if(document.getElementById('page-dash').classList.contains('active'))renderDash();
 }
 
@@ -1712,6 +1656,27 @@ function renderAssets(){
     ${assetsExpandedLabel===r.label?`<div class="asset-detail">${(r.items&&r.items.length)?r.items.map(it=>`<div class="asset-detail-item"><span>${it.name}</span><strong>${fmt(it.value)}</strong></div>`).join(''):'<div class="asset-detail-item"><span>暫無明細</span></div>'}</div>`:''}
     <button class="asset-plus" onclick="event.stopPropagation();openAssetAdd('${r.label}')">+</button>
   </div>`).join('');
+  // CC section at bottom
+  const _ccSec=document.getElementById('assets-cc-section');
+  const _ccListEl=document.getElementById('assets-cc-list');
+  const _ccCards=getCards();
+  if(_ccSec&&_ccCards.length>0){
+    _ccSec.style.display='block';
+    _ccListEl.innerHTML=_ccCards.map(function(c){
+      const debt=getCardDebt(c);
+      const color=c.color||'#cc785c';
+      const isPaid=debt===0;
+      return '<div class="cc-asset-row">'
+        +'<span style="font-size:14px;font-weight:600;color:'+color+'">'+c.name+'</span>'
+        +(isPaid
+          ?'<span class="badge badge-income" style="font-size:11px;margin-left:8px">已還款</span>'
+          :'<span class="badge badge-expense" style="font-size:11px;margin-left:8px">未還款</span>')
+        +'<span class="row-amount amount-neg" style="margin-left:auto">-'+fmt(debt)+'</span>'
+        +'</div>';
+    }).join('');
+  } else if(_ccSec){
+    _ccSec.style.display='none';
+  }
 }
 function toggleAssetDetails(label){
   assetsExpandedLabel=(assetsExpandedLabel===label?'':label);
@@ -1786,16 +1751,28 @@ function renderCardColorSwatches(selected){
 function selectCardColor(c){
   document.getElementById('card-color').value=c;
   renderCardColorSwatches(c);
+  updateCardNamePreview();
+}
+function updateCardNamePreview(){
+  const nameEl=document.getElementById('card-name');
+  const colorEl=document.getElementById('card-color');
+  const el=document.getElementById('card-name-preview');
+  if(!el)return;
+  const name=(nameEl&&nameEl.value||'').trim();
+  const color=(colorEl&&colorEl.value)||CC_COLORS[0];
+  el.textContent=name||'預覽';
+  el.style.color=color;
 }
 function openCardModal(){
   document.getElementById('modal-card-title').textContent='新增信用卡';
   document.getElementById('card-edit-id').value='';
   document.getElementById('card-name').value='';
   document.getElementById('card-bank').value='';
-  document.getElementById('card-statement-day').value='';
-  document.getElementById('card-due-day').value='';
+  document.getElementById('card-next-due-date').value='';
+  document.getElementById('card-next-repay-amount').value='';
   document.getElementById('card-balance').value='';
   renderCardColorSwatches(CC_COLORS[0]);
+  updateCardNamePreview();
   openModal('modal-card');
 }
 function editCard(id){
@@ -1804,36 +1781,38 @@ function editCard(id){
   document.getElementById('card-edit-id').value=id;
   document.getElementById('card-name').value=c.name;
   document.getElementById('card-bank').value=c.bank||'';
-  document.getElementById('card-statement-day').value=c.statementDay||'';
-  document.getElementById('card-due-day').value=c.dueDay||'';
+  document.getElementById('card-next-due-date').value=c.nextDueDate||'';
+  document.getElementById('card-next-repay-amount').value=c.nextRepayAmount||'';
   document.getElementById('card-balance').value=getCardDebt(c);
   renderCardColorSwatches(c.color||CC_COLORS[0]);
+  updateCardNamePreview();
   openModal('modal-card');
 }
 function saveCard(){
   const name=document.getElementById('card-name').value.trim();
   const bank=document.getElementById('card-bank').value.trim();
-  const statementDay=parseInt(document.getElementById('card-statement-day').value)||0;
-  const dueDay=parseInt(document.getElementById('card-due-day').value)||0;
+  const nextDueDate=document.getElementById('card-next-due-date').value||null;
+  const nextRepayAmount=parseFloat(document.getElementById('card-next-repay-amount').value)||null;
   const currentDebt=parseFloat(document.getElementById('card-balance').value)||0;
   const color=document.getElementById('card-color').value||CC_COLORS[0];
   if(!name)return alert('請輸入信用卡名稱');
   const id=document.getElementById('card-edit-id').value;
   const cards=getCards();
-  if(id){const i=cards.findIndex(c=>c.id===id);if(i>=0)cards[i]={...cards[i],name,bank,statementDay,dueDay,currentDebt,color};}
-  else cards.push({id:uid(),name,bank,statementDay:statementDay||null,dueDay:dueDay||null,currentDebt,color});
+  if(id){const i=cards.findIndex(c=>c.id===id);if(i>=0)cards[i]={...cards[i],name,bank,nextDueDate,nextRepayAmount,currentDebt,color};}
+  else cards.push({id:uid(),name,bank,nextDueDate,nextRepayAmount,currentDebt,color});
   sv(K.cards,cards);
   closeModal('modal-card');
   renderAssets();
   if(document.getElementById('page-settings').classList.contains('active'))renderSettings();
   if(document.getElementById('page-dash').classList.contains('active'))renderDash();
+  if(document.getElementById('page-cc-list')&&document.getElementById('page-cc-list').classList.contains('active'))renderCCList();
 }
 function deleteCard(id){
   if(!confirm('確定刪除此信用卡？刪除後相關交易記錄仍保留。'))return;
   sv(K.cards,getCards().filter(c=>c.id!==id));
   renderAssets();
   if(document.getElementById('page-settings').classList.contains('active'))renderSettings();
-  if(document.getElementById('page-cc-detail').classList.contains('active')){closeCCDetail();}
+  if(document.getElementById('page-cc-list')&&document.getElementById('page-cc-list').classList.contains('active')){closeCCList();}
 }
 
 // Settings / Categories
@@ -1879,12 +1858,12 @@ function renderCCSettings(){
     const color=c.color||'#cc785c';
     const debt=getCardDebt(c);
     let dueInfo='';
-    if(c.dueDay){const st=getDueDateStatus(c.dueDay);dueInfo=' <span class="status-dot '+st.color+'" style="width:8px;height:8px;vertical-align:middle;display:inline-block"></span>';}
+    if(c.nextDueDate){const st=getDueDateStatus(c.nextDueDate);if(st)dueInfo=' <span class="status-dot '+st.color+'" style="width:8px;height:8px;vertical-align:middle;display:inline-block"></span>';}
     return '<div class="cc-settings-item">'
       +'<div style="display:flex;align-items:center">'
       +'<div class="cc-settings-dot" style="background:'+color+'"></div>'
       +'<div><div style="font-size:14px;font-weight:600">'+c.name+dueInfo+'</div>'
-      +'<div style="font-size:12px;color:var(--text2)">'+(c.bank||'')+(c.dueDay?' · 還款日:'+c.dueDay+'日':'')+'</div></div>'
+      +'<div style="font-size:12px;color:var(--text2)">'+(c.bank||'')+(c.nextDueDate?' · 還款日:'+fmtDueDate(c.nextDueDate):'')+'</div></div>'
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px">'
       +'<span class="row-amount amount-neg">'+fmt(debt)+'</span>'
